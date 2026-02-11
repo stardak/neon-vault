@@ -844,6 +844,7 @@ const UNLOCK_URI="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAC0CAYAAACq
 
 
 const bgSprite=PIXI.Sprite.from(BG_URI);
+bgSprite.anchor.set(0.5);bgSprite.x=W/2;bgSprite.y=H/2;
 bgSprite.width=W;bgSprite.height=H;
 bgLayer.addChild(bgSprite);
 // Darken overlay so symbols stay readable
@@ -1517,6 +1518,9 @@ document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();
 // ════════════════════════════════════════════════════════════
 app.ticker.add(delta=>{
     const t=performance.now();
+    // Slow breathing zoom on background (30s full cycle)
+    const bgScale=1+0.03*Math.sin(t*0.0002094);
+    bgSprite.scale.set(bgScale*W/bgSprite.texture.width,bgScale*H/bgSprite.texture.height);
     ambParts.forEach(p=>p.update(delta));
     drawAmbientLines();
     drawGlow(t);
