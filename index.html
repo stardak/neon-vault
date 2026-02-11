@@ -350,16 +350,16 @@
             background:linear-gradient(-30deg, var(--neon-cyan), transparent, var(--neon-magenta));
         }
         #spin-btn-wrap { position:relative; display:flex; align-items:center; justify-content:center; margin-top:-60px; z-index:10; }
-        #spin-btn-wrap .electric-border-outer { border-radius:50%; }
-        #spin-btn-wrap .electric-border-inner { border-radius:50%; }
-        #spin-btn-wrap .electric-glow-1 { border-radius:50%; }
-        #spin-btn-wrap .electric-glow-2 { border-radius:50%; }
-        #spin-btn-wrap .electric-bg-glow { border-radius:50%; }
-        #spin-btn-wrap.spinning .electric-border-outer { border-color:rgba(255,0,170,0.5); transition:border-color 0.3s; }
-        #spin-btn-wrap.spinning .electric-border-inner { border-color:var(--neon-magenta); transition:border-color 0.3s; }
-        #spin-btn-wrap.spinning .electric-glow-1 { border-color:rgba(255,0,170,0.6); transition:border-color 0.3s; }
-        #spin-btn-wrap.spinning .electric-glow-2 { border-color:var(--neon-magenta); transition:border-color 0.3s; }
-        #spin-btn-wrap.spinning .electric-bg-glow { background:linear-gradient(-30deg, var(--neon-magenta), transparent, var(--neon-magenta)); transition:background 0.3s; }
+        #spin-btn-wrap .electric-border-outer { border-radius:50%; border-color:rgba(255,0,170,0.5); transition:border-color 0.3s; }
+        #spin-btn-wrap .electric-border-inner { border-radius:50%; border-color:var(--neon-magenta); transition:border-color 0.3s; }
+        #spin-btn-wrap .electric-glow-1 { border-radius:50%; border-color:rgba(255,0,170,0.6); transition:border-color 0.3s; }
+        #spin-btn-wrap .electric-glow-2 { border-radius:50%; border-color:var(--neon-magenta); transition:border-color 0.3s; }
+        #spin-btn-wrap .electric-bg-glow { border-radius:50%; background:linear-gradient(-30deg, var(--neon-magenta), transparent, var(--neon-magenta)); transition:background 0.3s; }
+        #spin-btn-wrap.spinning .electric-border-outer { border-color:rgba(0,240,255,0.5); }
+        #spin-btn-wrap.spinning .electric-border-inner { border-color:var(--neon-cyan); }
+        #spin-btn-wrap.spinning .electric-glow-1 { border-color:rgba(0,240,255,0.6); }
+        #spin-btn-wrap.spinning .electric-glow-2 { border-color:var(--neon-cyan); }
+        #spin-btn-wrap.spinning .electric-bg-glow { background:linear-gradient(-30deg, var(--neon-cyan), transparent, var(--neon-magenta)); }
         .ctrl-group { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:110px; }
         .ctrl-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-dim); }
         .ctrl-value { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--text-primary); }
@@ -368,8 +368,9 @@
         .bet-btn { width:32px; height:32px; border-radius:8px; border:1px solid rgba(0,240,255,0.25); background:rgba(0,240,255,0.06); color:var(--neon-cyan); font-family:'Orbitron',monospace; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
         .bet-btn:hover { background:rgba(0,240,255,0.15); border-color:rgba(0,240,255,0.5); box-shadow:0 0 12px rgba(0,240,255,0.2); }
 
-        #spin-btn { position:relative; display:flex; align-items:center; justify-content:center; width:140px; height:140px; border-radius:50%; border:none; background-color:#000; background-size:contain; background-repeat:no-repeat; background-position:center; cursor:pointer; transition:all 0.2s; overflow:visible; filter:drop-shadow(0 0 15px rgba(0,240,255,0.4)) drop-shadow(0 0 30px rgba(255,0,170,0.2)); animation:spinPulse 2s ease-in-out infinite; }
-        @keyframes spinPulse { 0%,100%{ filter:drop-shadow(0 0 15px rgba(0,240,255,0.4)) drop-shadow(0 0 30px rgba(255,0,170,0.2)); } 50%{ filter:drop-shadow(0 0 25px rgba(0,240,255,0.6)) drop-shadow(0 0 50px rgba(255,0,170,0.3)) drop-shadow(0 0 80px rgba(0,240,255,0.15)); } }
+        #spin-btn { position:relative; display:flex; align-items:center; justify-content:center; width:140px; height:140px; border-radius:50%; border:none; background-color:#000; background-size:contain; background-repeat:no-repeat; background-position:center; cursor:pointer; transition:all 0.3s; overflow:visible; filter:drop-shadow(0 0 15px rgba(255,0,170,0.4)) drop-shadow(0 0 30px rgba(255,0,170,0.2)); animation:spinPulse 2s ease-in-out infinite; }
+        #spin-btn.spinning { filter:drop-shadow(0 0 15px rgba(0,240,255,0.4)) drop-shadow(0 0 30px rgba(0,240,255,0.2)); }
+        @keyframes spinPulse { 0%,100%{ filter:drop-shadow(0 0 15px rgba(255,0,170,0.4)) drop-shadow(0 0 30px rgba(255,0,170,0.2)); } 50%{ filter:drop-shadow(0 0 25px rgba(255,0,170,0.6)) drop-shadow(0 0 50px rgba(255,0,170,0.3)) drop-shadow(0 0 80px rgba(255,0,170,0.15)); } }
         #spin-btn::after { content:''; position:absolute; inset:-3px; border-radius:50%; background:conic-gradient(from 0deg,transparent 0%,var(--neon-cyan) 25%,transparent 50%); opacity:0; }
         #spin-btn:hover:not(:disabled) { transform:scale(1.08); filter:drop-shadow(0 0 30px rgba(0,240,255,0.6)) drop-shadow(0 0 60px rgba(255,0,170,0.3)); animation:none; }
         #spin-btn:active:not(:disabled) { transform:scale(0.95); }
