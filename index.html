@@ -1080,6 +1080,8 @@ function animateReels(tgt){
                 if(scattersLanded>=2)startAnticipation();
                 // Slow-animate remaining reels
                 let settled=0;const totalSlow=REELS-anticipationStartReel;
+                const stReelLanded=new Array(REELS).fill(false);let stScatterResolved=false;
+                for(let i=0;i<anticipationStartReel;i++)stReelLanded[i]=true;
                 reels.forEach((reel,idx)=>{
                     if(idx<anticipationStartReel)return;
                     const pause=400+(idx-anticipationStartReel)*300;
@@ -1092,6 +1094,7 @@ function animateReels(tgt){
                     let bouncing=false,landed=false;
                     function easeSlot(t){if(t<0.15)return t/0.15*0.25;if(t<0.45)return 0.25+(t-0.15)/0.3*0.35;const d=(t-0.45)/0.55;return 0.6+0.4*(1-Math.pow(1-d,2.8));}
                     function tick(now){
+                        if(stReelLanded[idx])return;
                         const el=now-st;if(el<0){requestAnimationFrame(tick);return;}
                         if(!bouncing){
                             const prog=Math.min(el/dur,1),e=Math.min(easeSlot(prog),1);
@@ -1104,8 +1107,14 @@ function animateReels(tgt){
                             const bt=Math.min((now-st-dur)/bounceDur,1);
                             const bounce=bounceAmt*Math.sin(bt*Math.PI)*Math.pow(1-bt,1.5);
                             for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H+bounce*SYM_H;}
-                            if(bt>=1){landed=true;SFX.reelStop(idx);
-                                if(tgt[idx].includes('S')){scattersLanded++;SFX.scatterLand();scatterFlash(idx);}
+                            if(bt>=1){landed=true;stReelLanded[idx]=true;SFX.reelStop(idx);
+                                if(tgt[idx].includes('S')){scattersLanded++;SFX.scatterLand();scatterFlash(idx);
+                                    if(scattersLanded>=3&&!stScatterResolved){
+                                        stScatterResolved=true;
+                                        for(let i=0;i<REELS;i++){if(!stReelLanded[i]){stReelLanded[i]=true;instantRevealReel(reels[i],i,tgt);SFX.reelStop(i);if(tgt[i].includes('S')){SFX.scatterLand();scatterFlash(i);}}}
+                                        stopAnticipation();resolve();return;
+                                    }
+                                }
                                 for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H;}
                                 reelFlash(idx);symbolLandPop(idx,tgt[idx]);settled++;
                                 if(settled===totalSlow){stopAnticipation();resolve();}
@@ -1123,6 +1132,7 @@ function animateReels(tgt){
     return new Promise(resolve=>{
         const bd=isTurbo()?80:200,sd=isTurbo()?500:1200;let settled=0;
         let scattersLanded=0,anticipationActive=false;
+        const reelLanded=new Array(REELS).fill(false);let scatterResolved=false;
         reels.forEach((reel,idx)=>{
             const isSlowReel=hasAnticipation&&idx>=anticipationStartReel;
             const anticipationPause=isTurbo()?400:800;
@@ -1143,6 +1153,7 @@ function animateReels(tgt){
                 return 0.6+0.4*(1-Math.pow(1-d,2.8));
             }
             function tick(now){
+                if(reelLanded[idx])return;
                 const el=now-st;if(el<0){requestAnimationFrame(tick);return;}
                 if(!bouncing){
                     const prog=Math.min(el/dur,1);
@@ -1166,12 +1177,17 @@ function animateReels(tgt){
                     const bounce=bounceAmt*Math.sin(bt*Math.PI)*Math.pow(1-bt,1.5);
                     for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H+bounce*SYM_H;}
                     if(bt>=1){
-                        landed=true;
+                        landed=true;reelLanded[idx]=true;
                         SFX.reelStop(idx);
                         if(tgt[idx].includes('S')){
                             scattersLanded++;
                             SFX.scatterLand();
                             scatterFlash(idx);
+                            if(scattersLanded>=3&&!scatterResolved){
+                                scatterResolved=true;
+                                for(let i=0;i<REELS;i++){if(!reelLanded[i]){reelLanded[i]=true;instantRevealReel(reels[i],i,tgt);SFX.reelStop(i);if(tgt[i].includes('S')){SFX.scatterLand();scatterFlash(i);}}}
+                                settled=REELS;stopAnticipation();resolve();return;
+                            }
                             if(scattersLanded>=2&&!anticipationActive&&settled<REELS-1){
                                 anticipationActive=true;
                                 startAnticipation();
