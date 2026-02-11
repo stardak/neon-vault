@@ -1576,9 +1576,12 @@ function updateFreeSpinHUD(){
     document.getElementById('fs-total-win').textContent='$'+freeSpinsTotalWin.toFixed(2);
 }
 
+let speedModeBeforeFS=-1;
 async function triggerFreeSpins(scatterCount){
     inFreeSpins=true;inBonus=true;
     autoplay=false;document.getElementById('btn-auto').classList.remove('active');
+    // Disable super turbo during free spins so player can watch
+    if(isSuperTurbo()){speedModeBeforeFS=speedMode;speedMode=1;updateSpeedBtns();}else{speedModeBeforeFS=-1;}
     freeSpinsRemaining=FREE_SPIN_AWARDS[scatterCount]||10;
     freeSpinsMultiplier=FREE_SPIN_MULTIPLIERS[scatterCount]||2;
     freeSpinsTotalWin=0;freeSpinsCount=0;freeSpinsBet=bet;
@@ -1682,6 +1685,8 @@ async function endFreeSpins(){
     await new Promise(r=>setTimeout(r,3500));
     ov.classList.remove('show','mega','big');
     inFreeSpins=false;inBonus=false;
+    // Restore super turbo if it was on before free spins
+    if(speedModeBeforeFS>=0){speedMode=speedModeBeforeFS;speedModeBeforeFS=-1;updateSpeedBtns();}
     spinsSinceLastScatterBonus=0;
     nextScatterAt=25+Math.floor(Math.random()*51);
     updateUI();
