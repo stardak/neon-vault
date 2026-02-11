@@ -447,9 +447,88 @@
             #bonus-total-value { font-size:20px; }
             #bonus-collect-btn { font-size:10px; padding:8px 24px; }
         }
+        /* Neon flicker effect on background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 30%, rgba(0,240,255,0.03), transparent 70%),
+                        radial-gradient(ellipse at 80% 70%, rgba(255,0,170,0.02), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+            animation: neonFlicker 8s infinite;
+        }
+        @keyframes neonFlicker {
+            0%, 100% { opacity: 1; }
+            5% { opacity: 0.92; }
+            10% { opacity: 1; }
+            32% { opacity: 0.96; }
+            33% { opacity: 0.88; }
+            34% { opacity: 1; }
+            55% { opacity: 0.94; }
+            56% { opacity: 0.85; }
+            57% { opacity: 0.97; }
+            58% { opacity: 1; }
+            78% { opacity: 0.93; }
+            79% { opacity: 1; }
+            90% { opacity: 0.91; }
+            91% { opacity: 1; }
+        }
+
+        /* Floating dust particles */
+        .dust-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .dust {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            background: rgba(0, 240, 255, 0.5);
+            animation: dustFloat linear infinite;
+        }
+        @keyframes dustFloat {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: var(--dust-opacity); }
+            90% { opacity: var(--dust-opacity); }
+            100% { transform: translateY(-100vh) translateX(var(--dust-drift)); opacity: 0; }
+        }
+
     </style>
 </head>
 <body>
+<div class="dust-container" id="dust-container"></div>
+<script>
+(function() {
+    const container = document.getElementById('dust-container');
+    const count = 25;
+    for (let i = 0; i < count; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dust';
+        const size = Math.random() * 1.5 + 1;
+        const duration = Math.random() * 12 + 10;
+        const delay = Math.random() * -20;
+        const left = Math.random() * 100;
+        const drift = (Math.random() - 0.5) * 60;
+        const opacity = Math.random() * 0.4 + 0.15;
+        const isCyan = Math.random() > 0.3;
+        dot.style.cssText = `
+            width:${size}px;height:${size}px;
+            left:${left}%;bottom:-5px;
+            background:${isCyan ? 'rgba(0,240,255,' + opacity + ')' : 'rgba(255,255,255,' + opacity + ')'};
+            animation-duration:${duration}s;
+            animation-delay:${delay}s;
+            --dust-opacity:${opacity};
+            --dust-drift:${drift}px;
+        `;
+        container.appendChild(dot);
+    }
+})();
+</script>
 
 <div id="game-wrapper">
     <div id="game-header">
