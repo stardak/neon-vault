@@ -299,15 +299,32 @@
 
         /* ═══ FREE SPINS HUD ═══ */
         #freespin-hud {
-            position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:35;
-            display:none; gap:24px; padding:6px 20px;
-            background:rgba(0,0,0,0.7); border:1px solid rgba(255,230,0,0.3);
-            border-radius:8px; backdrop-filter:blur(8px);
+            position:absolute; top:0; left:0; right:0; z-index:35;
+            display:none; align-items:center; justify-content:center; gap:32px;
+            padding:10px 20px;
+            background:linear-gradient(180deg, rgba(255,230,0,0.12) 0%, rgba(0,0,0,0.85) 100%);
+            border-bottom:2px solid rgba(255,230,0,0.5);
+            box-shadow:0 4px 30px rgba(255,230,0,0.15);
+            backdrop-filter:blur(12px);
         }
         #freespin-hud.active { display:flex; }
+        .fs-hud-title {
+            font-family:'Orbitron',monospace; font-size:14px; font-weight:900; letter-spacing:6px;
+            background:linear-gradient(135deg,var(--neon-yellow),var(--neon-green));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+            filter:drop-shadow(0 0 8px rgba(255,230,0,0.5));
+            animation:fsPulseText 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes fsPulseText { from{filter:drop-shadow(0 0 8px rgba(255,230,0,0.5));} to{filter:drop-shadow(0 0 16px rgba(255,230,0,0.8));} }
         .fs-hud-item { text-align:center; }
         .fs-hud-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text-dim); }
-        .fs-hud-value { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--neon-yellow); text-shadow:0 0 10px rgba(255,230,0,0.4); }
+        .fs-hud-value { font-family:'Orbitron',monospace; font-size:22px; font-weight:700; color:var(--neon-yellow); text-shadow:0 0 12px rgba(255,230,0,0.5); }
+        #fs-remaining { font-size:28px; }
+        .fs-hud-sep { width:1px; height:32px; background:rgba(255,230,0,0.25); }
+        /* Spin counter: "3 of 10" style */
+        .fs-counter { font-family:'Orbitron',monospace; font-size:11px; font-weight:600; color:rgba(255,230,0,0.6); letter-spacing:1px; margin-top:2px; }
+        /* Game border glow during free spins */
+        #canvas-container.freespin-active { box-shadow:0 0 30px rgba(255,230,0,0.2), inset 0 0 30px rgba(255,230,0,0.05); border-color:rgba(255,230,0,0.4) !important; transition:box-shadow 0.5s, border-color 0.5s; }
 
         /* ═══ BONUS OVERLAY ═══ */
         #bonus-overlay {
@@ -523,8 +540,12 @@
             </div>
         </div>
         <div id="freespin-hud">
-            <div class="fs-hud-item"><div class="fs-hud-label">SPINS LEFT</div><div class="fs-hud-value" id="fs-remaining">0</div></div>
+            <div class="fs-hud-title">FREE SPINS</div>
+            <div class="fs-hud-sep"></div>
+            <div class="fs-hud-item"><div class="fs-hud-label">SPINS LEFT</div><div class="fs-hud-value" id="fs-remaining">0</div><div class="fs-counter" id="fs-counter">0 of 0</div></div>
+            <div class="fs-hud-sep"></div>
             <div class="fs-hud-item"><div class="fs-hud-label">MULTIPLIER</div><div class="fs-hud-value" id="fs-multiplier">2x</div></div>
+            <div class="fs-hud-sep"></div>
             <div class="fs-hud-item"><div class="fs-hud-label">TOTAL WON</div><div class="fs-hud-value" id="fs-total-win">$0.00</div></div>
         </div>
         <div id="bonus-overlay">
@@ -792,7 +813,7 @@ let nextScatterAt=25+Math.floor(Math.random()*51); // 25-75
 const FREE_SPIN_AWARDS={3:10,4:15,5:25};
 const FREE_SPIN_MULTIPLIERS={3:2,4:3,5:5};
 let inFreeSpins=false, freeSpinsRemaining=0, freeSpinsTotalWin=0;
-let freeSpinsMultiplier=1, freeSpinsBet=1, freeSpinsCount=0;
+let freeSpinsMultiplier=1, freeSpinsBet=1, freeSpinsCount=0, freeSpinsTotalAwarded=0;
 
 // ════════════════════════════════════════════════════════════
 // BACKGROUND
@@ -1550,6 +1571,7 @@ document.getElementById('bonus-collect-btn').addEventListener('click',collectBon
 // ════════════════════════════════════════════════════════════
 function updateFreeSpinHUD(){
     document.getElementById('fs-remaining').textContent=freeSpinsRemaining;
+    document.getElementById('fs-counter').textContent=freeSpinsCount+' of '+freeSpinsTotalAwarded;
     document.getElementById('fs-multiplier').textContent=freeSpinsMultiplier+'x';
     document.getElementById('fs-total-win').textContent='$'+freeSpinsTotalWin.toFixed(2);
 }
@@ -1560,6 +1582,7 @@ async function triggerFreeSpins(scatterCount){
     freeSpinsRemaining=FREE_SPIN_AWARDS[scatterCount]||10;
     freeSpinsMultiplier=FREE_SPIN_MULTIPLIERS[scatterCount]||2;
     freeSpinsTotalWin=0;freeSpinsCount=0;freeSpinsBet=bet;
+    freeSpinsTotalAwarded=freeSpinsRemaining;
 
     // Flashy intro
     SFX.bonusTrigger();
@@ -1567,6 +1590,7 @@ async function triggerFreeSpins(scatterCount){
     document.getElementById('freespin-intro-count').textContent=freeSpinsRemaining;
     document.getElementById('freespin-intro-mult').textContent=freeSpinsMultiplier+'× MULTIPLIER';
     intro.classList.add('active');
+    document.getElementById('canvas-container').classList.add('freespin-active');
     const gw=document.getElementById('game-wrapper');
     gw.classList.add('shake-mega');setTimeout(()=>gw.classList.remove('shake-mega'),600);
     spawnMega();
@@ -1625,7 +1649,7 @@ async function doFreeSpin(){
     // Retrigger check: 3+ scatters during free spins add more spins (cap 50)
     if(res.sc>=3&&freeSpinsRemaining+freeSpinsCount<50){
         const extra=FREE_SPIN_AWARDS[res.sc]||5;
-        freeSpinsRemaining+=extra;
+        freeSpinsRemaining+=extra;freeSpinsTotalAwarded+=extra;
         SFX.bonusTrigger();
         const intro=document.getElementById('freespin-intro-overlay');
         document.getElementById('freespin-intro-count').textContent='+'+extra;
@@ -1642,6 +1666,7 @@ async function doFreeSpin(){
 
 async function endFreeSpins(){
     document.getElementById('freespin-hud').classList.remove('active');
+    document.getElementById('canvas-container').classList.remove('freespin-active');
     SFX.bonusCollect();
     const ov=document.getElementById('win-overlay');
     ov.classList.remove('show','mega','big');void ov.offsetWidth;
