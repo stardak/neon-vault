@@ -447,91 +447,9 @@
             #bonus-total-value { font-size:20px; }
             #bonus-collect-btn { font-size:10px; padding:8px 24px; }
         }
-        /* Neon flicker effect overlay */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(ellipse at 50% 20%, rgba(0,240,255,0.08), transparent 60%),
-                        radial-gradient(ellipse at 80% 70%, rgba(255,0,170,0.06), transparent 50%),
-                        radial-gradient(ellipse at 20% 60%, rgba(180,0,255,0.05), transparent 50%);
-            pointer-events: none;
-            z-index: 9998;
-            animation: neonFlicker 6s infinite;
-        }
-        @keyframes neonFlicker {
-            0%, 100% { opacity: 1; }
-            4% { opacity: 0.85; }
-            6% { opacity: 1; }
-            15% { opacity: 0.92; }
-            16% { opacity: 0.78; }
-            17% { opacity: 1; }
-            30% { opacity: 0.95; }
-            45% { opacity: 0.88; }
-            46% { opacity: 0.7; }
-            47% { opacity: 0.95; }
-            48% { opacity: 1; }
-            70% { opacity: 0.9; }
-            71% { opacity: 0.82; }
-            72% { opacity: 1; }
-            88% { opacity: 0.86; }
-            89% { opacity: 1; }
-        }
-
-        /* Floating dust particles */
-        .dust-container {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 9997;
-            overflow: hidden;
-        }
-        .dust {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            border-radius: 50%;
-            background: rgba(0, 240, 255, 0.5);
-            animation: dustFloat linear infinite;
-        }
-        @keyframes dustFloat {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            10% { opacity: var(--dust-opacity); }
-            90% { opacity: var(--dust-opacity); }
-            100% { transform: translateY(-100vh) translateX(var(--dust-drift)); opacity: 0; }
-        }
-
     </style>
 </head>
 <body>
-<div class="dust-container" id="dust-container"></div>
-<script>
-(function() {
-    const container = document.getElementById('dust-container');
-    const count = 25;
-    for (let i = 0; i < count; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'dust';
-        const size = Math.random() * 1.5 + 1;
-        const duration = Math.random() * 12 + 10;
-        const delay = Math.random() * -20;
-        const left = Math.random() * 100;
-        const drift = (Math.random() - 0.5) * 60;
-        const opacity = Math.random() * 0.4 + 0.15;
-        const isCyan = Math.random() > 0.3;
-        dot.style.cssText = `
-            width:${size}px;height:${size}px;
-            left:${left}%;bottom:-5px;
-            background:${isCyan ? 'rgba(0,240,255,' + opacity + ')' : 'rgba(255,255,255,' + opacity + ')'};
-            animation-duration:${duration}s;
-            animation-delay:${delay}s;
-            --dust-opacity:${opacity};
-            --dust-drift:${drift}px;
-        `;
-        container.appendChild(dot);
-    }
-})();
-</script>
 
 <div id="game-wrapper">
     <div id="game-header">
@@ -849,6 +767,42 @@ bgSprite.width=W;bgSprite.height=H;
 bgLayer.addChild(bgSprite);
 // Darken overlay so symbols stay readable
 const bgDarken=new PIXI.Graphics();bgDarken.beginFill(0x000000,0.3);bgDarken.drawRect(0,0,W,H);bgDarken.endFill();bgLayer.addChild(bgDarken);
+
+// Neon flicker glow overlays (behind symbols)
+const neonGlow1=new PIXI.Graphics();neonGlow1.beginFill(CYAN,0.06);neonGlow1.drawEllipse(W*0.5,H*0.2,W*0.5,H*0.35);neonGlow1.endFill();bgLayer.addChild(neonGlow1);
+const neonGlow2=new PIXI.Graphics();neonGlow2.beginFill(MAGENTA,0.045);neonGlow2.drawEllipse(W*0.8,H*0.7,W*0.4,H*0.3);neonGlow2.endFill();bgLayer.addChild(neonGlow2);
+const neonGlow3=new PIXI.Graphics();neonGlow3.beginFill(PURPLE,0.04);neonGlow3.drawEllipse(W*0.2,H*0.6,W*0.35,H*0.3);neonGlow3.endFill();bgLayer.addChild(neonGlow3);
+
+// Floating dust particles (behind symbols)
+class DustMote{
+    constructor(){
+        this.gfx=new PIXI.Graphics();
+        this.reset(true);
+        bgLayer.addChild(this.gfx);
+    }
+    reset(init=false){
+        this.x=Math.random()*W;
+        this.y=init?Math.random()*H:H+5;
+        this.spd=0.05+Math.random()*0.15;
+        this.drift=(Math.random()-0.5)*0.1;
+        this.sz=0.5+Math.random()*1.5;
+        this.maxA=0.15+Math.random()*0.35;
+        this.ph=Math.random()*Math.PI*2;
+        this.isCyan=Math.random()>0.3;
+    }
+    update(dt){
+        this.y-=this.spd*dt;
+        this.x+=this.drift*dt;
+        this.ph+=0.01*dt;
+        if(this.y<-10)this.reset();
+        const a=this.maxA*(0.3+0.7*Math.abs(Math.sin(this.ph)));
+        this.gfx.clear();
+        this.gfx.beginFill(this.isCyan?CYAN:0xffffff,a);
+        this.gfx.drawCircle(this.x,this.y,this.sz);
+        this.gfx.endFill();
+    }
+}
+const dustMotes=[];for(let i=0;i<30;i++)dustMotes.push(new DustMote());
 
 class AmbientP{
     constructor(){this.gfx=new PIXI.Graphics();this.reset(true);bgLayer.addChild(this.gfx);}
@@ -1521,6 +1475,13 @@ app.ticker.add(delta=>{
     // Slow breathing zoom on background (30s full cycle)
     const bgScale=1+0.03*Math.sin(t*0.0002094);
     bgSprite.scale.set(bgScale*W/bgSprite.texture.width,bgScale*H/bgSprite.texture.height);
+    // Neon flicker - irregular alpha pulsing
+    const f1=0.6+0.4*Math.sin(t*0.001)*Math.sin(t*0.00037);
+    const f2=0.5+0.5*Math.sin(t*0.0008+1.5)*Math.sin(t*0.00053+0.7);
+    const f3=0.55+0.45*Math.sin(t*0.0012+3.0)*Math.sin(t*0.00041+2.1);
+    neonGlow1.alpha=f1;neonGlow2.alpha=f2;neonGlow3.alpha=f3;
+    // Dust motes
+    dustMotes.forEach(d=>d.update(delta));
     ambParts.forEach(p=>p.update(delta));
     drawAmbientLines();
     drawGlow(t);
