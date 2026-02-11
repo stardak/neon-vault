@@ -355,6 +355,11 @@
         #spin-btn-wrap .electric-glow-1 { border-radius:50%; }
         #spin-btn-wrap .electric-glow-2 { border-radius:50%; }
         #spin-btn-wrap .electric-bg-glow { border-radius:50%; }
+        #spin-btn-wrap.spinning .electric-border-outer { border-color:rgba(255,0,170,0.5); transition:border-color 0.3s; }
+        #spin-btn-wrap.spinning .electric-border-inner { border-color:var(--neon-magenta); transition:border-color 0.3s; }
+        #spin-btn-wrap.spinning .electric-glow-1 { border-color:rgba(255,0,170,0.6); transition:border-color 0.3s; }
+        #spin-btn-wrap.spinning .electric-glow-2 { border-color:var(--neon-magenta); transition:border-color 0.3s; }
+        #spin-btn-wrap.spinning .electric-bg-glow { background:linear-gradient(-30deg, var(--neon-magenta), transparent, var(--neon-magenta)); transition:background 0.3s; }
         .ctrl-group { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:110px; }
         .ctrl-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-dim); }
         .ctrl-value { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--text-primary); }
@@ -1379,6 +1384,7 @@ async function doSpin(){
     spinning=true;
     SFX.spinStart();
     const btn=document.getElementById('spin-btn');btn.disabled=true;btn.classList.add('spinning');
+    document.getElementById('spin-btn-wrap').classList.add('spinning');
     clearWinLines();
     clearPremiumGlow();
     document.getElementById('win-overlay').classList.remove('show','mega');
@@ -1435,6 +1441,7 @@ async function doSpin(){
     }
 
     updateUI();spinning=false;btn.disabled=false;btn.classList.remove('spinning');
+    document.getElementById('spin-btn-wrap').classList.remove('spinning');
     sparkleBtn();
 
     // Bonus check
