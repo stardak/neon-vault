@@ -259,6 +259,56 @@
         .win-coin { position:absolute; width:8px; height:8px; border-radius:50%; pointer-events:none; z-index:31; animation:coinBurst 1s ease-out forwards; }
         @keyframes coinBurst { 0%{opacity:1;transform:translate(0,0) scale(1);} 100%{opacity:0;transform:translate(var(--cx),var(--cy)) scale(0);} }
 
+        /* ═══ SCATTER ANTICIPATION ═══ */
+        @keyframes anticipationPulse {
+            0%,100% { box-shadow:inset 0 0 30px rgba(255,230,0,0.05); }
+            50% { box-shadow:inset 0 0 60px rgba(255,230,0,0.15), 0 0 40px rgba(255,230,0,0.1); }
+        }
+        #game-wrapper.anticipation-pulse { animation:anticipationPulse 0.7s ease-in-out infinite; }
+
+        /* ═══ FREE SPINS INTRO ═══ */
+        #freespin-intro-overlay {
+            position:absolute; inset:0; z-index:55; display:none; align-items:center; justify-content:center;
+            background:rgba(3,3,12,0.95); backdrop-filter:blur(16px);
+        }
+        #freespin-intro-overlay.active { display:flex; }
+        #freespin-intro-content { text-align:center; }
+        #freespin-intro-title {
+            font-family:'Orbitron',monospace; font-size:36px; font-weight:900; letter-spacing:12px;
+            background:linear-gradient(135deg,var(--neon-yellow),var(--neon-green));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+            filter:drop-shadow(0 0 30px rgba(255,230,0,0.6));
+            animation:fsBounce 0.8s cubic-bezier(0.175,0.885,0.32,1.4) both;
+        }
+        #freespin-intro-count {
+            font-family:'Orbitron',monospace; font-size:72px; font-weight:900;
+            color:var(--neon-yellow); text-shadow:0 0 40px rgba(255,230,0,0.7);
+            animation:fsBounce 0.8s cubic-bezier(0.175,0.885,0.32,1.4) 0.3s both;
+        }
+        #freespin-intro-mult {
+            font-family:'Orbitron',monospace; font-size:24px; font-weight:700; letter-spacing:6px;
+            color:var(--neon-green); text-shadow:0 0 20px rgba(0,255,136,0.5);
+            animation:fsBounce 0.8s cubic-bezier(0.175,0.885,0.32,1.4) 0.5s both;
+        }
+        #freespin-intro-sub {
+            font-family:'Share Tech Mono',monospace; font-size:14px; letter-spacing:6px;
+            color:var(--text-dim); margin-top:16px;
+            animation:bonusFadeIn 0.8s ease-out 0.7s both;
+        }
+        @keyframes fsBounce { from{opacity:0;transform:scale(0.3);} to{opacity:1;transform:scale(1);} }
+
+        /* ═══ FREE SPINS HUD ═══ */
+        #freespin-hud {
+            position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:35;
+            display:none; gap:24px; padding:6px 20px;
+            background:rgba(0,0,0,0.7); border:1px solid rgba(255,230,0,0.3);
+            border-radius:8px; backdrop-filter:blur(8px);
+        }
+        #freespin-hud.active { display:flex; }
+        .fs-hud-item { text-align:center; }
+        .fs-hud-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text-dim); }
+        .fs-hud-value { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--neon-yellow); text-shadow:0 0 10px rgba(255,230,0,0.4); }
+
         /* ═══ BONUS OVERLAY ═══ */
         #bonus-overlay {
             position:absolute; inset:0; z-index:50; display:none; flex-direction:column; align-items:center; justify-content:flex-start;
@@ -500,6 +550,19 @@
         </div>
 
         <button onclick="startBonus()" style="position:fixed;bottom:8px;left:8px;z-index:9999;padding:4px 10px;font-size:11px;font-family:'Share Tech Mono',monospace;background:rgba(255,0,170,0.15);border:1px solid rgba(255,0,170,0.4);color:#f0a;border-radius:4px;cursor:pointer;opacity:0.6;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">⚡ BONUS</button>
+        <div id="freespin-intro-overlay">
+            <div id="freespin-intro-content">
+                <div id="freespin-intro-title">FREE SPINS</div>
+                <div id="freespin-intro-count"></div>
+                <div id="freespin-intro-mult"></div>
+                <div id="freespin-intro-sub">GOOD LUCK</div>
+            </div>
+        </div>
+        <div id="freespin-hud">
+            <div class="fs-hud-item"><div class="fs-hud-label">SPINS LEFT</div><div class="fs-hud-value" id="fs-remaining">0</div></div>
+            <div class="fs-hud-item"><div class="fs-hud-label">MULTIPLIER</div><div class="fs-hud-value" id="fs-multiplier">2x</div></div>
+            <div class="fs-hud-item"><div class="fs-hud-label">TOTAL WON</div><div class="fs-hud-value" id="fs-total-win">$0.00</div></div>
+        </div>
         <div id="bonus-overlay">
             <div id="bonus-intro">
                 <h2>⚡ HACK THE VAULT ⚡</h2>
@@ -740,6 +803,25 @@ const SFX=(()=>{
             ensure();
             tone(440,'sine',0.08,0.12);
             tone(660,'sine',0.1,0.1,0.05);
+        },
+        // Heartbeat thump for scatter anticipation
+        heartbeat(){
+            ensure();
+            tone(55,'sine',0.15,0.35);
+            tone(55,'sine',0.12,0.3,0.18);
+            noise(0.05,0.03,0.05);
+        },
+        // Rising tension sound
+        tensionRiser(){
+            ensure();
+            const t=ctx.currentTime;
+            const buf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+            const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+            const s=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+            s.buffer=buf;f.type='bandpass';
+            f.frequency.setValueAtTime(200,t);f.frequency.exponentialRampToValueAtTime(4000,t+2);f.Q.value=5;
+            g.gain.setValueAtTime(0.08,t);g.gain.linearRampToValueAtTime(0.15,t+1.5);g.gain.exponentialRampToValueAtTime(0.001,t+2);
+            s.connect(f);f.connect(g);g.connect(masterGain);s.start(t);s.stop(t+2);
         }
     };
 })();
@@ -757,6 +839,14 @@ let spinsSinceBonus=0;
 let nextBonusAt=25+Math.floor(Math.random()*51);
 let bonusPicks=0, bonusMaxPicks=5, bonusTotalWin=0, bonusBetAtTrigger=1;
 let bonusCellValues=[];
+
+// ─── SCATTER / FREE SPINS STATE ──────────────────────────
+let spinsSinceLastScatterBonus=0;
+let nextScatterAt=25+Math.floor(Math.random()*51); // 25-75
+const FREE_SPIN_AWARDS={3:10,4:15,5:25};
+const FREE_SPIN_MULTIPLIERS={3:2,4:3,5:5};
+let inFreeSpins=false, freeSpinsRemaining=0, freeSpinsTotalWin=0;
+let freeSpinsMultiplier=1, freeSpinsBet=1, freeSpinsCount=0;
 
 // ════════════════════════════════════════════════════════════
 // BACKGROUND
@@ -874,29 +964,66 @@ function initGrid(){
 function genOutcome(){
     const grid=[];
     for(let r=0;r<REELS;r++){const stop=Math.floor(Math.random()*STRIPS[r].length),strip=STRIPS[r],len=strip.length;grid.push([strip[stop%len],strip[(stop+1)%len],strip[(stop+2)%len]]);}
+    // Scatter frequency control
+    let sc=0;const scPos=[];
+    for(let r=0;r<REELS;r++)for(let row=0;row<ROWS;row++)if(grid[r][row]==='S'){sc++;scPos.push({r,row});}
+    const replacements=['L1','L2','L3','L4','H1','H2','H3'];
+    if(spinsSinceLastScatterBonus<nextScatterAt){
+        // Not due: cap at 2 scatters
+        while(scPos.length>2){const idx=Math.floor(Math.random()*scPos.length);const{r,row}=scPos.splice(idx,1)[0];grid[r][row]=replacements[Math.floor(Math.random()*replacements.length)];}
+    }else{
+        // Due: ensure at least 3 scatters spread across different reels
+        if(sc<3){
+            const reelsWithSc=new Set(scPos.map(p=>p.r));
+            const empties=[];
+            for(let r=0;r<REELS;r++)for(let row=0;row<ROWS;row++)if(grid[r][row]!=='S')empties.push({r,row});
+            while(sc<3){
+                let cands=empties.filter(e=>!reelsWithSc.has(e.r));
+                if(cands.length===0)cands=empties;
+                const idx=Math.floor(Math.random()*cands.length);
+                const pos=cands[idx];
+                grid[pos.r][pos.row]='S';
+                reelsWithSc.add(pos.r);
+                empties.splice(empties.indexOf(pos),1);
+                sc++;
+            }
+        }
+    }
+    return grid;
+}
+
+function genFreeSpinOutcome(){
+    const grid=[];
+    for(let r=0;r<REELS;r++){const stop=Math.floor(Math.random()*STRIPS[r].length),strip=STRIPS[r],len=strip.length;grid.push([strip[stop%len],strip[(stop+1)%len],strip[(stop+2)%len]]);}
     return grid;
 }
 
 function animateReels(tgt){
     return new Promise(resolve=>{
         const bd=turbo?80:200,sd=turbo?500:1200;let settled=0;
+        // Pre-scan for scatter anticipation
+        let scattersLanded=0,anticipationActive=false;
+        let anticipationStartReel=-1,earlyScCount=0;
+        for(let r=0;r<REELS;r++){
+            if(tgt[r].includes('S'))earlyScCount++;
+            if(earlyScCount>=2&&r<REELS-1){anticipationStartReel=r+1;break;}
+        }
         reels.forEach((reel,idx)=>{
-            const delay=idx*bd,dur=sd+idx*(turbo?80:180),strip=STRIPS[idx],spinSyms=[];
-            /* More spin symbols for longer visual travel */
-            const extraSyms=turbo?14+idx*3:20+idx*4;
+            const isSlowReel=anticipationStartReel>0&&idx>=anticipationStartReel;
+            const anticipationPause=turbo?400:800;
+            const delay=isSlowReel?anticipationStartReel*bd+sd+anticipationStartReel*(turbo?80:180)+anticipationPause+(idx-anticipationStartReel)*(turbo?300:600):idx*bd;
+            const dur=isSlowReel?(turbo?1500:2500)+(idx-anticipationStartReel)*(turbo?200:400):sd+idx*(turbo?80:180);
+            const strip=STRIPS[idx],spinSyms=[];
+            const extraSyms=isSlowReel?(turbo?30+idx*5:45+idx*8):(turbo?14+idx*3:20+idx*4);
             for(let i=0;i<extraSyms;i++)spinSyms.push(strip[Math.floor(Math.random()*strip.length)]);
             spinSyms.push(...tgt[idx]);
             const ts=spinSyms.length-ROWS,st=performance.now()+delay;
-            /* Bounce parameters */
-            const bounceStart=performance.now()+delay+dur;
             const bounceDur=turbo?120:220;
-            const bounceAmt=0.35;/* overshoot in symbol-heights */
+            const bounceAmt=0.35;
             let bouncing=false,landed=false;
             function easeSlot(t){
-                /* Fast start, long deceleration curve */
-                if(t<0.15)return t/0.15*0.25;/* quick ramp up to 25% */
-                if(t<0.45)return 0.25+(t-0.15)/0.3*0.35;/* steady fast: 25%→60% */
-                /* long deceleration from 60% to 100% */
+                if(t<0.15)return t/0.15*0.25;
+                if(t<0.45)return 0.25+(t-0.15)/0.3*0.35;
                 const d=(t-0.45)/0.55;
                 return 0.6+0.4*(1-Math.pow(1-d,2.8));
             }
@@ -906,7 +1033,6 @@ function animateReels(tgt){
                     const prog=Math.min(el/dur,1);
                     const e=Math.min(easeSlot(prog),1);
                     const step=e*ts,is=Math.floor(step),fr=step-is;
-                    /* Blur effect: motion blur alpha during fast phase */
                     const speed=prog<0.5?1:Math.max(0,(1-prog)*2);
                     const blurAlpha=speed>0.3?0.65+0.35*(1-speed):1;
                     for(let s=0;s<ROWS;s++){
@@ -917,24 +1043,30 @@ function animateReels(tgt){
                     }
                     if(prog>=1){
                         bouncing=true;
-                        /* Set final symbols */
                         for(let s=0;s<ROWS;s++){reel.sprites[s].texture=symTex[tgt[idx][s]];reel.sprites[s].symId=tgt[idx][s];reel.sprites[s].alpha=1;}
                         requestAnimationFrame(tick);return;
                     }
                 }else if(!landed){
-                    /* Bounce: overshoot down then spring back */
                     const bt=Math.min((now-st-dur)/bounceDur,1);
-                    /* Damped sine bounce */
                     const bounce=bounceAmt*Math.sin(bt*Math.PI)*Math.pow(1-bt,1.5);
-                    for(let s=0;s<ROWS;s++){
-                        reel.sprites[s].y=s*SYM_H+bounce*SYM_H;
-                    }
+                    for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H+bounce*SYM_H;}
                     if(bt>=1){
                         landed=true;
                         SFX.reelStop(idx);
+                        // Scatter landing effects
+                        if(tgt[idx].includes('S')){
+                            scattersLanded++;
+                            SFX.scatterLand();
+                            scatterFlash(idx);
+                            // Start anticipation when 2nd scatter lands and more reels remain
+                            if(scattersLanded>=2&&!anticipationActive&&settled<REELS-1){
+                                anticipationActive=true;
+                                startAnticipation();
+                            }
+                        }
                         for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H;}
                         reelFlash(idx);symbolLandPop(idx,tgt[idx]);settled++;
-                        if(settled===REELS)resolve();
+                        if(settled===REELS){stopAnticipation();resolve();}
                         return;
                     }
                 }
@@ -984,6 +1116,44 @@ function symbolLandPop(ri,syms){
         }
         requestAnimationFrame(pop);
     }
+}
+
+// ════════════════════════════════════════════════════════════
+// SCATTER ANTICIPATION
+// ════════════════════════════════════════════════════════════
+let anticipationOverlay=null,anticipationPulseId=null,heartbeatInterval=null;
+
+function scatterFlash(ri){
+    const f=new PIXI.Graphics();f.beginFill(YELLOW,0.2);f.drawRect(GRID_X+ri*(SYM_W+REEL_GAP),GRID_Y,SYM_W,GRID_H);f.endFill();reelLayer.addChild(f);
+    let a=0.35;const fade=()=>{a-=0.01;f.alpha=a;if(a>0)requestAnimationFrame(fade);else{reelLayer.removeChild(f);f.destroy();}};requestAnimationFrame(fade);
+}
+
+function startAnticipation(){
+    SFX.tensionRiser();
+    anticipationOverlay=new PIXI.Graphics();app.stage.addChild(anticipationOverlay);
+    let phase=0;
+    function pulse(){
+        if(!anticipationOverlay)return;
+        phase+=0.08;
+        const intensity=0.03+0.04*Math.sin(phase);
+        anticipationOverlay.clear();
+        anticipationOverlay.lineStyle(3,YELLOW,0.3+0.3*Math.sin(phase));
+        anticipationOverlay.drawRect(GRID_X-2,GRID_Y-2,GRID_W+4,GRID_H+4);
+        anticipationOverlay.beginFill(0x000000,intensity);
+        anticipationOverlay.drawRect(0,0,W,H);
+        anticipationOverlay.endFill();
+        anticipationPulseId=requestAnimationFrame(pulse);
+    }
+    anticipationPulseId=requestAnimationFrame(pulse);
+    document.getElementById('game-wrapper').classList.add('anticipation-pulse');
+    heartbeatInterval=setInterval(()=>SFX.heartbeat(),700);
+}
+
+function stopAnticipation(){
+    if(anticipationOverlay){app.stage.removeChild(anticipationOverlay);anticipationOverlay.destroy();anticipationOverlay=null;}
+    if(anticipationPulseId){cancelAnimationFrame(anticipationPulseId);anticipationPulseId=null;}
+    if(heartbeatInterval){clearInterval(heartbeatInterval);heartbeatInterval=null;}
+    document.getElementById('game-wrapper').classList.remove('anticipation-pulse');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1359,6 +1529,124 @@ function collectBonus(){
 document.getElementById('bonus-collect-btn').addEventListener('click',collectBonus);
 
 // ════════════════════════════════════════════════════════════
+// FREE SPINS BONUS
+// ════════════════════════════════════════════════════════════
+function updateFreeSpinHUD(){
+    document.getElementById('fs-remaining').textContent=freeSpinsRemaining;
+    document.getElementById('fs-multiplier').textContent=freeSpinsMultiplier+'x';
+    document.getElementById('fs-total-win').textContent='$'+freeSpinsTotalWin.toFixed(2);
+}
+
+async function triggerFreeSpins(scatterCount){
+    inFreeSpins=true;inBonus=true;
+    autoplay=false;document.getElementById('btn-auto').classList.remove('active');
+    freeSpinsRemaining=FREE_SPIN_AWARDS[scatterCount]||10;
+    freeSpinsMultiplier=FREE_SPIN_MULTIPLIERS[scatterCount]||2;
+    freeSpinsTotalWin=0;freeSpinsCount=0;freeSpinsBet=bet;
+
+    // Flashy intro
+    SFX.bonusTrigger();
+    const intro=document.getElementById('freespin-intro-overlay');
+    document.getElementById('freespin-intro-count').textContent=freeSpinsRemaining;
+    document.getElementById('freespin-intro-mult').textContent=freeSpinsMultiplier+'× MULTIPLIER';
+    intro.classList.add('active');
+    const gw=document.getElementById('game-wrapper');
+    gw.classList.add('shake-mega');setTimeout(()=>gw.classList.remove('shake-mega'),600);
+    spawnMega();
+
+    await new Promise(r=>setTimeout(r,3000));
+    intro.classList.remove('active');
+
+    // Show HUD
+    document.getElementById('freespin-hud').classList.add('active');
+    updateFreeSpinHUD();
+    doFreeSpin();
+}
+
+async function doFreeSpin(){
+    if(freeSpinsRemaining<=0){endFreeSpins();return;}
+    spinning=true;freeSpinsRemaining--;freeSpinsCount++;
+    SFX.spinStart();
+    const btn=document.getElementById('spin-btn');btn.disabled=true;btn.classList.add('spinning');
+    document.getElementById('spin-btn-wrap').classList.add('spinning');
+    clearWinLines();clearPremiumGlow();
+    document.getElementById('win-overlay').classList.remove('show','mega','big');
+    document.getElementById('ui-win').textContent='0.00';
+    document.getElementById('ui-win').classList.remove('win-active');
+    updateFreeSpinHUD();
+
+    const grid=genFreeSpinOutcome(),res=evalSpin(grid);
+    await animateReels(grid);
+    currentGrid=grid;startPremiumGlow(grid);
+
+    const winAmt=res.mult*freeSpinsBet*freeSpinsMultiplier;
+    if(winAmt>0){
+        freeSpinsTotalWin+=winAmt;balance+=winAmt;totalWon+=winAmt;
+        if(res.wins.length>0){drawWL(res.wins);spawnWinP(res.wins);}
+        const ov=document.getElementById('win-overlay');
+        const amtEl=document.getElementById('win-amount');
+        const subEl=document.getElementById('win-sub');
+        const mult=winAmt/freeSpinsBet;
+        ov.classList.remove('show','mega','big');void ov.offsetWidth;
+        const gw=document.getElementById('game-wrapper');gw.classList.remove('shake-big','shake-mega');void gw.offsetWidth;
+        if(winAmt>=freeSpinsBet*50){document.getElementById('win-label').textContent='⚡ MEGA WIN ⚡';ov.classList.add('mega');spawnMega();subEl.textContent=Math.round(mult)+'× ('+freeSpinsMultiplier+'× MULTI)';SFX.winMega();gw.classList.add('shake-mega');}
+        else if(winAmt>=freeSpinsBet*10){document.getElementById('win-label').textContent='✦ BIG WIN ✦';ov.classList.add('big');subEl.textContent=Math.round(mult)+'× ('+freeSpinsMultiplier+'× MULTI)';SFX.winBig();gw.classList.add('shake-big');}
+        else{document.getElementById('win-label').textContent='WIN';subEl.textContent=freeSpinsMultiplier+'× MULTIPLIER';SFX.winSmall();}
+        const countDur=winAmt>=freeSpinsBet*10?1200:700;const countStart=performance.now();
+        function countUp(now){const p=Math.min((now-countStart)/countDur,1);const ease=1-Math.pow(1-p,3);amtEl.textContent='$'+(winAmt*ease).toFixed(2);if(p<1)requestAnimationFrame(countUp);}
+        requestAnimationFrame(countUp);
+        ov.classList.add('show');
+        document.getElementById('ui-win').textContent=winAmt.toFixed(2);
+        document.getElementById('ui-win').classList.add('win-active');
+        setTimeout(()=>ov.classList.remove('show','mega','big'),2000);
+    }
+
+    updateFreeSpinHUD();updateUI();
+    spinning=false;btn.disabled=false;btn.classList.remove('spinning');
+    document.getElementById('spin-btn-wrap').classList.remove('spinning');
+
+    // Retrigger check: 3+ scatters during free spins add more spins (cap 50)
+    if(res.sc>=3&&freeSpinsRemaining+freeSpinsCount<50){
+        const extra=FREE_SPIN_AWARDS[res.sc]||5;
+        freeSpinsRemaining+=extra;
+        SFX.bonusTrigger();
+        const intro=document.getElementById('freespin-intro-overlay');
+        document.getElementById('freespin-intro-count').textContent='+'+extra;
+        document.getElementById('freespin-intro-mult').textContent='RETRIGGER!';
+        intro.classList.add('active');
+        await new Promise(r=>setTimeout(r,2000));
+        intro.classList.remove('active');
+        updateFreeSpinHUD();
+    }
+
+    const delay=turbo?400:800;
+    setTimeout(()=>doFreeSpin(),delay);
+}
+
+async function endFreeSpins(){
+    document.getElementById('freespin-hud').classList.remove('active');
+    SFX.bonusCollect();
+    const ov=document.getElementById('win-overlay');
+    ov.classList.remove('show','mega','big');void ov.offsetWidth;
+    document.getElementById('win-label').textContent='⚡ FREE SPINS COMPLETE ⚡';
+    document.getElementById('win-sub').textContent=freeSpinsCount+' SPINS × '+freeSpinsMultiplier+'x';
+    const amtEl=document.getElementById('win-amount');
+    const cStart=performance.now();
+    function cUp(now){const p=Math.min((now-cStart)/1400,1);amtEl.textContent='$'+(freeSpinsTotalWin*(1-Math.pow(1-p,3))).toFixed(2);if(p<1)requestAnimationFrame(cUp);}
+    requestAnimationFrame(cUp);
+    ov.classList.add('show','mega');spawnMega();
+    document.getElementById('ui-win').textContent=freeSpinsTotalWin.toFixed(2);
+    document.getElementById('ui-win').classList.add('win-active');
+    await new Promise(r=>setTimeout(r,3500));
+    ov.classList.remove('show','mega','big');
+    inFreeSpins=false;inBonus=false;
+    spinsSinceLastScatterBonus=0;
+    nextScatterAt=25+Math.floor(Math.random()*51);
+    updateUI();
+    if(autoplay&&balance>=bet)setTimeout(()=>doSpin(),turbo?300:700);
+}
+
+// ════════════════════════════════════════════════════════════
 // SPIN
 // ════════════════════════════════════════════════════════════
 function sparkleBtn(){
@@ -1393,7 +1681,7 @@ async function doSpin(){
     document.getElementById('ui-win').classList.remove('win-active');
 
     balance-=bet;totalBet+=bet;
-    spinsSinceBonus++;
+    spinsSinceBonus++;spinsSinceLastScatterBonus++;
     updateBonusMeter();updateUI();
 
     const grid=genOutcome(),res=evalSpin(grid);
@@ -1445,7 +1733,14 @@ async function doSpin(){
     document.getElementById('spin-btn-wrap').classList.remove('spinning');
     sparkleBtn();
 
-    // Bonus check
+    // Scatter free spins check (priority)
+    if(res.sc>=3){
+        await new Promise(r=>setTimeout(r,800));
+        triggerFreeSpins(res.sc);
+        return;
+    }
+
+    // Vault bonus check (meter-based)
     if(spinsSinceBonus>=nextBonusAt){
         await new Promise(r=>setTimeout(r,600));
         startBonus();
