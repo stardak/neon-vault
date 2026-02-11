@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jewel Rush - Slot Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(255, 170, 0, 0.15), 0 0 120px rgba(255, 100, 0, 0.08);
+        }
+        #ui-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+            z-index: 10;
+        }
+        .ui-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .ui-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ffa50088;
+        }
+        .ui-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+        }
+        #spin-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #ffa500;
+            background: radial-gradient(circle at 30% 30%, #ffcc00, #ff8800, #cc5500);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 20px rgba(255, 136, 0, 0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+        }
+        #spin-btn:hover:not(:disabled) {
+            transform: scale(1.08);
+            box-shadow: 0 4px 30px rgba(255, 136, 0, 0.6), inset 0 -2px 4px rgba(0,0,0,0.2);
+        }
+        #spin-btn:active:not(:disabled) { transform: scale(0.95); }
+        #spin-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #666;
+        }
+        .bet-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .bet-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #ffa50066;
+            background: rgba(255, 170, 0, 0.1);
+            color: #ffa500;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .bet-btn:hover { background: rgba(255, 170, 0, 0.25); }
+        #win-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 900;
+            color: #ffdd00;
+            text-shadow: 0 0 30px rgba(255, 200, 0, 0.8), 0 0 60px rgba(255, 150, 0, 0.4);
+            opacity: 0;
+            z-index: 20;
+            pointer-events: none;
+            transition: all 0.3s;
+            text-align: center;
+            line-height: 1.2;
+        }
+        #win-display.show {
+            opacity: 1;
+            animation: winPulse 1.5s ease-in-out;
+        }
+        #win-display .win-sub {
+            font-size: 16px;
+            color: #ffa500aa;
+            letter-spacing: 3px;
+        }
+        @keyframes winPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            40% { transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+        }
+        #info-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 10px;
+            background: linear-gradient(rgba(0,0,0,0.85), transparent);
+            z-index: 10;
+        }
+        .info-item {
+            font-size: 10px;
+            color: #ffa50088;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+        .info-item span { color: #ffffffcc; font-weight: 600; }
+        #autoplay-toggle {
+            position: absolute;
+            bottom: 105px;
+            right: 24px;
+            z-index: 10;
+            font-size: 10px;
+            color: #ffa50088;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #ffa50033;
+            border-radius: 12px;
+            padding: 4px 12px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        #autoplay-toggle:hover { border-color: #ffa50088; color: #ffa500; }
+        #autoplay-toggle.active { border-color: #ffa500; color: #ffa500; background: rgba(255,170,0,0.1); }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="info-bar">
+            <div class="info-item">Paylines: <span>20</span></div>
+            <div class="info-item">RTP: <span>96.0%</span></div>
+            <div class="info-item" id="rtp-live">Session RTP: <span>—</span></div>
+        </div>
+        <div id="win-display"></div>
+        <button id="autoplay-toggle">Auto</button>
+        <div id="ui-overlay">
+            <div class="ui-panel">
+                <div class="ui-label">Balance</div>
+                <div class="ui-value" id="balance-val">$1,000.00</div>
+            </div>
+            <div class="ui-panel">
+                <div class="ui-label">Bet</div>
+                <div class="bet-controls">
+                    <button class="bet-btn" id="bet-down">−</button>
+                    <div class="ui-value" id="bet-val">$1.00</div>
+                    <button class="bet-btn" id="bet-up">+</button>
+                </div>
+            </div>
+            <button id="spin-btn">SPIN</button>
+            <div class="ui-panel">
+                <div class="ui-label">Win</div>
+                <div class="ui-value" id="win-val">$0.00</div>
+            </div>
+            <div class="ui-panel">
+                <div class="ui-label">Total Won</div>
+                <div class="ui-value" id="total-won-val">$0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════════════════════
+    // JEWEL RUSH - Full Slot Game (PixiJS)
+    // Compatible with Stake Engine /play API format
+    // ═══════════════════════════════════════════════════════════════
+
+    const GAME_WIDTH = 800;
+    const GAME_HEIGHT = 600;
+    const NUM_REELS = 5;
+    const NUM_ROWS = 3;
+    const SYMBOL_SIZE = 120;
+    const REEL_WIDTH = SYMBOL_SIZE + 16;
+    const GRID_TOP = 80;
+    const GRID_LEFT = (GAME_WIDTH - (REEL_WIDTH * NUM_REELS)) / 2;
+
+    // ─── Symbol Config ────────────────────────────────────────────
+    const SYMBOL_DEFS = {
+        W:  { emoji: '⭐', name: 'Wild',    color: 0xFFD700, tier: 'special' },
+        S:  { emoji: '💎', name: 'Scatter', color: 0xFF00FF, tier: 'special' },
+        H1: { emoji: '💠', name: 'Diamond', color: 0x00BFFF, tier: 'high' },
+        H2: { emoji: '🔴', name: 'Ruby',    color: 0xFF2222, tier: 'high' },
+        H3: { emoji: '🟢', name: 'Emerald', color: 0x22DD44, tier: 'high' },
+        L1: { emoji: 'A',  name: 'Ace',     color: 0xFFFFFF, tier: 'low' },
+        L2: { emoji: 'K',  name: 'King',    color: 0xDDDDFF, tier: 'low' },
+        L3: { emoji: 'Q',  name: 'Queen',   color: 0xFFDDDD, tier: 'low' },
+        L4: { emoji: 'J',  name: 'Jack',    color: 0xDDFFDD, tier: 'low' },
+    };
+
+    // ─── Reel Strips (same as math engine) ────────────────────────
+    const REEL_STRIPS = [
+        ["L4","L3","L2","H3","L4","L1","L3","H2","L4","L2","L1","L3","H1","L4","L2","L3","L1","W","L4","L2","L3","H3","L1","L4","L2","S","L3","L4","L1","L2"],
+        ["L2","L4","L3","L1","H3","L4","L2","L3","H2","L1","L4","L3","L2","H1","L1","L4","L3","W","L2","L4","L1","L3","H3","L2","L4","L1","S","L3","L4","L2"],
+        ["L3","L1","L4","L2","H3","L3","L1","L4","H2","L2","L3","L1","H1","L4","L2","L3","W","L1","L4","L2","L3","H3","L4","L1","L2","L3","S","L4","L1","L2"],
+        ["L1","L2","L3","L4","H3","L1","L2","L4","H2","L3","L1","L4","H1","L2","L3","L1","L4","W","L2","L3","L1","L4","H3","L2","L3","L4","S","L1","L2","L3"],
+        ["L4","L1","L2","L3","H3","L4","L1","L3","H2","L2","L4","L1","H1","L3","L2","L4","W","L1","L3","L2","L4","H3","L1","L3","L2","S","L4","L1","L3","L2"],
+    ];
+
+    // ─── Paylines ─────────────────────────────────────────────────
+    const PAYLINES = [
+        [1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],
+        [0,0,1,2,2],[2,2,1,0,0],[1,0,0,0,1],[1,2,2,2,1],[0,1,1,1,0],
+        [2,1,1,1,2],[1,0,1,0,1],[1,2,1,2,1],[0,1,0,1,0],[2,1,2,1,2],
+        [1,1,0,1,1],[1,1,2,1,1],[0,0,1,0,0],[2,2,1,2,2],[0,2,0,2,0],
+    ];
+
+    // ─── Paytable ─────────────────────────────────────────────────
+    const PAYTABLE = {
+        W:  {3:50,4:200,5:1000}, H1:{3:30,4:100,5:500}, H2:{3:20,4:75,5:250},
+        H3: {3:15,4:50,5:150},   L1:{3:10,4:30,5:100},  L2:{3:8,4:25,5:75},
+        L3: {3:5,4:20,5:50},     L4:{3:3,4:15,5:30},
+    };
+
+    const SCATTER_PAYS = {3:5, 4:20, 5:100};
+
+    // ─── Game State ───────────────────────────────────────────────
+    let balance = 1000;
+    let bet = 1;
+    let totalWon = 0;
+    let totalBet = 0;
+    let spinning = false;
+    let autoplay = false;
+    const BET_LEVELS = [0.20, 0.50, 1.00, 2.00, 5.00, 10.00, 25.00, 50.00];
+    let betIndex = 2;
+
+    // ─── PixiJS Setup ─────────────────────────────────────────────
+    const app = new PIXI.Application({
+        view: document.getElementById('game-canvas'),
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT,
+        backgroundColor: 0x0D0D25,
+        antialias: true,
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+    });
+
+    // Background gradient
+    const bgGfx = new PIXI.Graphics();
+    bgGfx.beginFill(0x0D0D25);
+    bgGfx.drawRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    bgGfx.endFill();
+    // Subtle radial glow
+    const bgGlow = new PIXI.Graphics();
+    bgGlow.beginFill(0x1a1040, 0.5);
+    bgGlow.drawEllipse(GAME_WIDTH/2, GAME_HEIGHT/2, 500, 350);
+    bgGlow.endFill();
+    app.stage.addChild(bgGfx, bgGlow);
+
+    // Reel container with mask
+    const reelContainer = new PIXI.Container();
+    reelContainer.x = GRID_LEFT;
+    reelContainer.y = GRID_TOP;
+    app.stage.addChild(reelContainer);
+
+    // Mask for reel area
+    const reelMask = new PIXI.Graphics();
+    reelMask.beginFill(0xffffff);
+    reelMask.drawRoundedRect(GRID_LEFT - 8, GRID_TOP - 8, REEL_WIDTH * NUM_REELS + 16, SYMBOL_SIZE * NUM_ROWS + 16, 12);
+    reelMask.endFill();
+    app.stage.addChild(reelMask);
+    reelContainer.mask = reelMask;
+
+    // Reel frame
+    const frame = new PIXI.Graphics();
+    frame.lineStyle(2, 0xffa500, 0.4);
+    frame.drawRoundedRect(GRID_LEFT - 10, GRID_TOP - 10, REEL_WIDTH * NUM_REELS + 20, SYMBOL_SIZE * NUM_ROWS + 20, 14);
+    // Reel separators
+    for (let i = 1; i < NUM_REELS; i++) {
+        frame.lineStyle(1, 0xffa500, 0.12);
+        const x = GRID_LEFT + i * REEL_WIDTH - 8;
+        frame.moveTo(x, GRID_TOP);
+        frame.lineTo(x, GRID_TOP + SYMBOL_SIZE * NUM_ROWS);
+    }
+    app.stage.addChild(frame);
+
+    // ─── Create Symbol Textures ───────────────────────────────────
+    function createSymbolTexture(symbolId) {
+        const def = SYMBOL_DEFS[symbolId];
+        const size = SYMBOL_SIZE - 8;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Background
+        const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+        const baseColor = def.color;
+        const r = (baseColor >> 16) & 0xFF, g = (baseColor >> 8) & 0xFF, b = baseColor & 0xFF;
+
+        if (def.tier === 'special') {
+            grad.addColorStop(0, `rgba(${r},${g},${b},0.35)`);
+            grad.addColorStop(1, `rgba(${r},${g},${b},0.08)`);
+        } else if (def.tier === 'high') {
+            grad.addColorStop(0, `rgba(${r},${g},${b},0.25)`);
+            grad.addColorStop(1, `rgba(${r},${g},${b},0.05)`);
+        } else {
+            grad.addColorStop(0, 'rgba(255,255,255,0.08)');
+            grad.addColorStop(1, 'rgba(255,255,255,0.02)');
+        }
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(4, 4, size - 8, size - 8, 12);
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = `rgba(${r},${g},${b},0.3)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(4, 4, size - 8, size - 8, 12);
+        ctx.stroke();
+
+        // Symbol text
+        if (def.emoji.length <= 2 && /[A-Z]/.test(def.emoji)) {
+            // Card symbols
+            ctx.font = `bold ${size * 0.5}px 'Segoe UI', system-ui, sans-serif`;
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = `rgba(${r},${g},${b},0.5)`;
+            ctx.shadowBlur = 10;
+            ctx.fillText(def.emoji, size / 2, size / 2);
+        } else {
+            // Emoji symbols
+            ctx.font = `${size * 0.45}px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(def.emoji, size / 2, size / 2 + 2);
+        }
+
+        return PIXI.Texture.from(canvas);
+    }
+
+    const symbolTextures = {};
+    for (const id of Object.keys(SYMBOL_DEFS)) {
+        symbolTextures[id] = createSymbolTexture(id);
+    }
+
+    // ─── Reel Objects ─────────────────────────────────────────────
+    const reels = [];
+
+    for (let r = 0; r < NUM_REELS; r++) {
+        const reel = {
+            container: new PIXI.Container(),
+            symbols: [],
+            position: 0,
+            previousPosition: 0,
+            blur: new PIXI.filters.BlurFilter(),
+        };
+        reel.blur.blurX = 0;
+        reel.blur.blurY = 0;
+        reel.container.filters = [reel.blur];
+        reel.container.x = r * REEL_WIDTH;
+
+        // Create enough symbols for smooth scrolling (visible + buffer)
+        const totalSymbols = NUM_ROWS + 4;
+        for (let s = 0; s < totalSymbols; s++) {
+            const stripIdx = s % REEL_STRIPS[r].length;
+            const symId = REEL_STRIPS[r][stripIdx];
+            const sprite = new PIXI.Sprite(symbolTextures[symId]);
+            sprite.x = 4;
+            sprite.y = s * SYMBOL_SIZE;
+            sprite.width = SYMBOL_SIZE - 8;
+            sprite.height = SYMBOL_SIZE - 8;
+            sprite.symbolId = symId;
+            reel.container.addChild(sprite);
+            reel.symbols.push(sprite);
+        }
+
+        reelContainer.addChild(reel.container);
+        reels.push(reel);
+    }
+
+    // Initial grid state
+    let currentGrid = [];
+    function initGrid() {
+        currentGrid = [];
+        for (let r = 0; r < NUM_REELS; r++) {
+            const col = [];
+            for (let row = 0; row < NUM_ROWS; row++) {
+                col.push(REEL_STRIPS[r][row]);
+            }
+            currentGrid.push(col);
+        }
+        updateReelDisplay();
+    }
+
+    function updateReelDisplay() {
+        for (let r = 0; r < NUM_REELS; r++) {
+            for (let row = 0; row < NUM_ROWS; row++) {
+                const symId = currentGrid[r][row];
+                const sprite = reels[r].symbols[row];
+                sprite.texture = symbolTextures[symId];
+                sprite.symbolId = symId;
+                sprite.y = row * SYMBOL_SIZE;
+            }
+        }
+    }
+
+    // ─── Payline Visualization ────────────────────────────────────
+    const paylineGfx = new PIXI.Graphics();
+    app.stage.addChild(paylineGfx);
+
+    function drawWinningPaylines(winningLines) {
+        paylineGfx.clear();
+        const colors = [0xFF0000, 0x00FF00, 0xFFFF00, 0xFF00FF, 0x00FFFF, 0xFF8800, 0x8800FF];
+
+        winningLines.forEach((win, idx) => {
+            const lineIdx = win.line - 1;
+            const payline = PAYLINES[lineIdx];
+            const color = colors[idx % colors.length];
+
+            paylineGfx.lineStyle(3, color, 0.7);
+
+            for (let r = 0; r < NUM_REELS; r++) {
+                const x = GRID_LEFT + r * REEL_WIDTH + SYMBOL_SIZE / 2;
+                const y = GRID_TOP + payline[r] * SYMBOL_SIZE + SYMBOL_SIZE / 2;
+
+                if (r === 0) paylineGfx.moveTo(x, y);
+                else paylineGfx.lineTo(x, y);
+
+                // Dot at each position
+                if (r < win.count) {
+                    paylineGfx.lineStyle(0);
+                    paylineGfx.beginFill(color, 0.5);
+                    paylineGfx.drawCircle(x, y, SYMBOL_SIZE / 2 - 4);
+                    paylineGfx.endFill();
+                    paylineGfx.lineStyle(3, color, 0.7);
+                }
+            }
+        });
+    }
+
+    // ─── Win Evaluation (mirrors Python engine) ───────────────────
+    function evaluatePayline(grid, payline) {
+        const syms = payline.map((row, reel) => grid[reel][row]);
+
+        let paySym = null;
+        for (const s of syms) {
+            if (s === 'S') return null;
+            if (s !== 'W') { paySym = s; break; }
+        }
+        if (!paySym) paySym = 'W';
+
+        let count = 0;
+        for (const s of syms) {
+            if (s === paySym || s === 'W') count++;
+            else break;
+        }
+
+        if (count >= 3 && PAYTABLE[paySym] && PAYTABLE[paySym][count]) {
+            return { symbol: paySym, count, payout: PAYTABLE[paySym][count], line: 0 };
+        }
+        return null;
+    }
+
+    function evaluateSpin(grid) {
+        const numPaylines = PAYLINES.length;
+        let totalLinePayout = 0;
+        const wins = [];
+
+        PAYLINES.forEach((pl, idx) => {
+            const result = evaluatePayline(grid, pl);
+            if (result) {
+                result.line = idx + 1;
+                wins.push(result);
+                totalLinePayout += result.payout;
+            }
+        });
+
+        let payoutMultiplier = totalLinePayout / numPaylines;
+
+        // Scatter check
+        let scatterCount = 0;
+        for (const col of grid) {
+            for (const sym of col) {
+                if (sym === 'S') scatterCount++;
+            }
+        }
+        if (SCATTER_PAYS[scatterCount]) {
+            payoutMultiplier += SCATTER_PAYS[scatterCount];
+        }
+
+        return { payoutMultiplier, wins, scatterCount };
+    }
+
+    // ─── Spin Animation ───────────────────────────────────────────
+    function generateOutcome() {
+        const stops = [];
+        const grid = [];
+
+        for (let r = 0; r < NUM_REELS; r++) {
+            const stop = Math.floor(Math.random() * REEL_STRIPS[r].length);
+            stops.push(stop);
+            const strip = REEL_STRIPS[r];
+            const len = strip.length;
+            grid.push([
+                strip[stop % len],
+                strip[(stop + 1) % len],
+                strip[(stop + 2) % len],
+            ]);
+        }
+
+        return { stops, grid };
+    }
+
+    async function spin() {
+        if (spinning || balance < bet) return;
+        spinning = true;
+
+        const spinBtn = document.getElementById('spin-btn');
+        spinBtn.disabled = true;
+        paylineGfx.clear();
+        document.getElementById('win-display').classList.remove('show');
+
+        // Deduct bet
+        balance -= bet;
+        totalBet += bet;
+        updateUI();
+
+        // Generate outcome (in production, this comes from /play API)
+        const outcome = generateOutcome();
+        const result = evaluateSpin(outcome.grid);
+
+        // Animate reels
+        await animateReels(outcome.grid);
+
+        currentGrid = outcome.grid;
+
+        // Handle win
+        const winAmount = result.payoutMultiplier * bet;
+        if (winAmount > 0) {
+            balance += winAmount;
+            totalWon += winAmount;
+
+            // Show winning paylines
+            if (result.wins.length > 0) {
+                drawWinningPaylines(result.wins);
+            }
+
+            // Win display
+            const winDisplay = document.getElementById('win-display');
+            if (winAmount >= bet * 50) {
+                winDisplay.innerHTML = `<div class="win-sub">🎉 MEGA WIN 🎉</div>$${winAmount.toFixed(2)}`;
+            } else if (winAmount >= bet * 10) {
+                winDisplay.innerHTML = `<div class="win-sub">✨ BIG WIN ✨</div>$${winAmount.toFixed(2)}`;
+            } else {
+                winDisplay.innerHTML = `$${winAmount.toFixed(2)}`;
+            }
+            winDisplay.classList.add('show');
+
+            document.getElementById('win-val').textContent = `$${winAmount.toFixed(2)}`;
+        } else {
+            document.getElementById('win-val').textContent = '$0.00';
+        }
+
+        updateUI();
+        spinning = false;
+        spinBtn.disabled = false;
+
+        // Autoplay
+        if (autoplay && balance >= bet) {
+            setTimeout(() => spin(), 800);
+        }
+    }
+
+    function animateReels(targetGrid) {
+        return new Promise(resolve => {
+            const spinDuration = 1500;
+            const staggerDelay = 200;
+            let completedReels = 0;
+
+            reels.forEach((reel, reelIdx) => {
+                const delay = reelIdx * staggerDelay;
+                const startTime = performance.now() + delay;
+                const strip = REEL_STRIPS[reelIdx];
+
+                // Generate spin sequence: random symbols then final 3
+                const spinSymbols = [];
+                const totalSpinSyms = 15 + reelIdx * 3;
+                for (let i = 0; i < totalSpinSyms; i++) {
+                    spinSymbols.push(strip[Math.floor(Math.random() * strip.length)]);
+                }
+                // Append target symbols at the end
+                spinSymbols.push(...targetGrid[reelIdx]);
+
+                const totalSteps = spinSymbols.length;
+
+                function animate(currentTime) {
+                    const elapsed = currentTime - startTime;
+
+                    if (elapsed < 0) {
+                        requestAnimationFrame(animate);
+                        return;
+                    }
+
+                    const progress = Math.min(elapsed / (spinDuration + reelIdx * 100), 1);
+                    // Easing: fast start, slow end
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const currentStep = eased * (totalSteps - NUM_ROWS);
+
+                    // Blur effect during spin
+                    reel.blur.blurY = progress < 0.8 ? 8 * (1 - progress) : 0;
+
+                    // Update visible symbols
+                    for (let row = 0; row < reel.symbols.length && row < NUM_ROWS; row++) {
+                        const symIndex = Math.floor(currentStep) + row;
+                        if (symIndex >= 0 && symIndex < spinSymbols.length) {
+                            const symId = spinSymbols[symIndex];
+                            reel.symbols[row].texture = symbolTextures[symId];
+                            reel.symbols[row].symbolId = symId;
+                        }
+                        // Slight vertical offset for smooth scrolling
+                        const frac = currentStep - Math.floor(currentStep);
+                        reel.symbols[row].y = row * SYMBOL_SIZE - frac * SYMBOL_SIZE * 0.3;
+                    }
+
+                    if (progress >= 1) {
+                        // Snap to final position
+                        reel.blur.blurY = 0;
+                        for (let row = 0; row < NUM_ROWS; row++) {
+                            const symId = targetGrid[reelIdx][row];
+                            reel.symbols[row].texture = symbolTextures[symId];
+                            reel.symbols[row].symbolId = symId;
+                            reel.symbols[row].y = row * SYMBOL_SIZE;
+                        }
+                        completedReels++;
+                        if (completedReels === NUM_REELS) resolve();
+                        return;
+                    }
+
+                    requestAnimationFrame(animate);
+                }
+
+                requestAnimationFrame(animate);
+            });
+        });
+    }
+
+    // ─── UI Updates ───────────────────────────────────────────────
+    function updateUI() {
+        document.getElementById('balance-val').textContent = `$${balance.toFixed(2)}`;
+        document.getElementById('bet-val').textContent = `$${bet.toFixed(2)}`;
+        document.getElementById('total-won-val').textContent = `$${totalWon.toFixed(2)}`;
+
+        const sessionRTP = totalBet > 0 ? ((totalWon / totalBet) * 100).toFixed(1) : '—';
+        document.getElementById('rtp-live').querySelector('span').textContent =
+            totalBet > 0 ? `${sessionRTP}%` : '—';
+    }
+
+    // ─── Event Listeners ──────────────────────────────────────────
+    document.getElementById('spin-btn').addEventListener('click', spin);
+
+    document.getElementById('bet-up').addEventListener('click', () => {
+        if (spinning) return;
+        betIndex = Math.min(betIndex + 1, BET_LEVELS.length - 1);
+        bet = BET_LEVELS[betIndex];
+        updateUI();
+    });
+
+    document.getElementById('bet-down').addEventListener('click', () => {
+        if (spinning) return;
+        betIndex = Math.max(betIndex - 1, 0);
+        bet = BET_LEVELS[betIndex];
+        updateUI();
+    });
+
+    document.getElementById('autoplay-toggle').addEventListener('click', () => {
+        autoplay = !autoplay;
+        document.getElementById('autoplay-toggle').classList.toggle('active', autoplay);
+        if (autoplay && !spinning) spin();
+    });
+
+    // Space bar to spin
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            spin();
+        }
+    });
+
+    // ─── Init ─────────────────────────────────────────────────────
+    initGrid();
+    updateUI();
+    </script>
+</body>
+</html>

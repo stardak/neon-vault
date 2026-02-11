@@ -1,0 +1,426 @@
+{
+  "game": {
+    "name": "Golden Reef",
+    "id": "golden-reef",
+    "version": "1.0.0",
+    "type": "slot"
+  },
+  "grid": {
+    "reels": 5,
+    "rows": 3,
+    "paylines": 20
+  },
+  "symbols": {
+    "WILD": {
+      "id": 0,
+      "name": "Treasure Chest",
+      "type": "wild"
+    },
+    "SCATTER": {
+      "id": 1,
+      "name": "Golden Compass",
+      "type": "scatter"
+    },
+    "HIGH1": {
+      "id": 2,
+      "name": "Gold Coin",
+      "type": "high"
+    },
+    "HIGH2": {
+      "id": 3,
+      "name": "Pearl",
+      "type": "high"
+    },
+    "HIGH3": {
+      "id": 4,
+      "name": "Starfish",
+      "type": "high"
+    },
+    "LOW1": {
+      "id": 5,
+      "name": "Seahorse",
+      "type": "low"
+    },
+    "LOW2": {
+      "id": 6,
+      "name": "Shell",
+      "type": "low"
+    },
+    "LOW3": {
+      "id": 7,
+      "name": "Coral",
+      "type": "low"
+    },
+    "LOW4": {
+      "id": 8,
+      "name": "Anchor",
+      "type": "low"
+    }
+  },
+  "paytable": {
+    "WILD": [
+      108.0,
+      540.0,
+      2700.0
+    ],
+    "HIGH1": [
+      54.0,
+      200.0,
+      1080.0
+    ],
+    "HIGH2": [
+      40.0,
+      135.0,
+      675.0
+    ],
+    "HIGH3": [
+      27.0,
+      108.0,
+      405.0
+    ],
+    "LOW1": [
+      13.5,
+      54.0,
+      200.0
+    ],
+    "LOW2": [
+      10.8,
+      40.0,
+      135.0
+    ],
+    "LOW3": [
+      8.0,
+      27.0,
+      108.0
+    ],
+    "LOW4": [
+      5.4,
+      20.0,
+      80.0
+    ]
+  },
+  "scatterPay": {
+    "3": 4.0,
+    "4": 20.0,
+    "5": 135.0
+  },
+  "freeSpins": {
+    "3": 10,
+    "4": 15,
+    "5": 25
+  },
+  "paylines": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    [
+      0,
+      1,
+      2,
+      1,
+      0
+    ],
+    [
+      2,
+      1,
+      0,
+      1,
+      2
+    ],
+    [
+      0,
+      0,
+      1,
+      2,
+      2
+    ],
+    [
+      2,
+      2,
+      1,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      0,
+      1,
+      1,
+      1,
+      0
+    ],
+    [
+      2,
+      1,
+      1,
+      1,
+      2
+    ],
+    [
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      2,
+      1,
+      2,
+      1
+    ],
+    [
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    [
+      2,
+      1,
+      2,
+      1,
+      2
+    ],
+    [
+      1,
+      1,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      2,
+      1,
+      1
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      2,
+      2,
+      1,
+      2,
+      2
+    ],
+    [
+      0,
+      2,
+      0,
+      2,
+      0
+    ]
+  ],
+  "reelStrips": [
+    [
+      "LOW4",
+      "LOW2",
+      "HIGH3",
+      "LOW1",
+      "LOW3",
+      "HIGH2",
+      "LOW4",
+      "LOW1",
+      "LOW2",
+      "HIGH1",
+      "LOW3",
+      "LOW4",
+      "SCATTER",
+      "LOW1",
+      "HIGH3",
+      "LOW2",
+      "LOW3",
+      "LOW4",
+      "HIGH2",
+      "LOW1",
+      "WILD",
+      "LOW2",
+      "LOW3",
+      "LOW4",
+      "HIGH3",
+      "LOW1",
+      "LOW2",
+      "LOW3",
+      "HIGH1",
+      "LOW4",
+      "LOW1",
+      "LOW2"
+    ],
+    [
+      "LOW1",
+      "HIGH3",
+      "LOW4",
+      "LOW2",
+      "LOW3",
+      "HIGH1",
+      "LOW4",
+      "SCATTER",
+      "LOW2",
+      "HIGH2",
+      "LOW1",
+      "LOW3",
+      "LOW4",
+      "HIGH3",
+      "LOW2",
+      "LOW1",
+      "LOW3",
+      "WILD",
+      "LOW4",
+      "LOW2",
+      "HIGH2",
+      "LOW1",
+      "LOW3",
+      "LOW4",
+      "LOW2",
+      "HIGH3",
+      "LOW1",
+      "LOW3",
+      "LOW4",
+      "LOW2",
+      "LOW1",
+      "HIGH1"
+    ],
+    [
+      "LOW3",
+      "LOW1",
+      "HIGH2",
+      "LOW4",
+      "LOW2",
+      "HIGH3",
+      "LOW1",
+      "LOW3",
+      "SCATTER",
+      "LOW2",
+      "HIGH1",
+      "LOW4",
+      "LOW1",
+      "LOW3",
+      "LOW2",
+      "HIGH2",
+      "LOW4",
+      "LOW1",
+      "WILD",
+      "LOW3",
+      "LOW2",
+      "HIGH3",
+      "LOW4",
+      "LOW1",
+      "LOW2",
+      "LOW3",
+      "HIGH1",
+      "LOW4",
+      "LOW1",
+      "LOW2",
+      "LOW3",
+      "LOW4"
+    ],
+    [
+      "LOW2",
+      "LOW4",
+      "HIGH1",
+      "LOW1",
+      "LOW3",
+      "HIGH3",
+      "LOW2",
+      "LOW4",
+      "LOW1",
+      "HIGH2",
+      "LOW3",
+      "SCATTER",
+      "LOW4",
+      "LOW2",
+      "HIGH3",
+      "LOW1",
+      "LOW3",
+      "LOW4",
+      "HIGH2",
+      "LOW2",
+      "LOW1",
+      "WILD",
+      "LOW3",
+      "LOW4",
+      "HIGH1",
+      "LOW2",
+      "LOW1",
+      "LOW3",
+      "LOW4",
+      "LOW2",
+      "HIGH3",
+      "LOW1"
+    ],
+    [
+      "LOW4",
+      "LOW1",
+      "HIGH3",
+      "LOW2",
+      "LOW3",
+      "HIGH2",
+      "LOW4",
+      "LOW1",
+      "LOW2",
+      "HIGH1",
+      "LOW3",
+      "LOW4",
+      "LOW1",
+      "SCATTER",
+      "HIGH3",
+      "LOW2",
+      "WILD",
+      "LOW3",
+      "LOW4",
+      "HIGH2",
+      "LOW1",
+      "LOW2",
+      "LOW3",
+      "LOW4",
+      "HIGH1",
+      "LOW1",
+      "LOW2",
+      "LOW3",
+      "LOW4",
+      "HIGH3",
+      "LOW2",
+      "LOW1"
+    ]
+  ]
+}

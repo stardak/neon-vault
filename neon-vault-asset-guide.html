@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON VAULT — Asset Design Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --cyan: #00f0ff;
+            --magenta: #ff00aa;
+            --purple: #b400ff;
+            --yellow: #ffe600;
+            --green: #00ff88;
+            --bg: #08081a;
+            --card: #0c0c24;
+            --card-border: rgba(0, 240, 255, 0.12);
+            --text: #d0e0f0;
+            --dim: rgba(160, 190, 220, 0.45);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* ─── Header ─────────────────────────── */
+        .guide-header {
+            text-align: center;
+            padding: 40px 0 50px;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 50px;
+        }
+        .guide-header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 10px;
+            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .guide-header p {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: var(--dim);
+        }
+
+        /* ─── Section ────────────────────────── */
+        .section {
+            margin-bottom: 60px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .section-num {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--cyan);
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 6px;
+            padding: 4px 10px;
+            letter-spacing: 2px;
+        }
+        .section h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--text);
+        }
+        .section-desc {
+            font-size: 15px;
+            color: var(--dim);
+            margin-bottom: 20px;
+            max-width: 700px;
+        }
+
+        /* ─── Cards ──────────────────────────── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* ─── Game Layout Mockup ─────────────── */
+        .layout-mockup {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 900 / 620;
+            background: #050510;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+        }
+        .mockup-label {
+            position: absolute;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: var(--cyan);
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px dashed rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            padding: 2px 8px;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .mockup-zone {
+            position: absolute;
+            border: 1px dashed;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .zone-bg {
+            border-color: rgba(180, 0, 255, 0.3);
+            background: rgba(180, 0, 255, 0.04);
+            color: rgba(180, 0, 255, 0.6);
+            inset: 2%;
+        }
+        .zone-logo {
+            border-color: rgba(255, 230, 0, 0.3);
+            background: rgba(255, 230, 0, 0.04);
+            color: rgba(255, 230, 0, 0.6);
+            top: 2%; left: 25%; right: 25%; height: 8%;
+        }
+        .zone-reels {
+            border-color: rgba(0, 240, 255, 0.4);
+            background: rgba(0, 240, 255, 0.03);
+            color: rgba(0, 240, 255, 0.7);
+            top: 15%; left: 8%; right: 8%; height: 62%;
+        }
+        .zone-controls {
+            border-color: rgba(0, 255, 136, 0.3);
+            background: rgba(0, 255, 136, 0.04);
+            color: rgba(0, 255, 136, 0.6);
+            bottom: 2%; left: 5%; right: 5%; height: 14%;
+        }
+
+        /* Reel grid inside mockup */
+        .mockup-reel-grid {
+            position: absolute;
+            top: 18%; left: 10%; right: 10%; height: 56%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+        }
+        .mockup-cell {
+            background: rgba(0, 240, 255, 0.03);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--dim);
+            gap: 1px;
+        }
+        .mockup-cell .cell-sym {
+            font-size: 20px;
+            opacity: 0.5;
+        }
+
+        /* ─── Symbol Template Grid ───────────── */
+        .symbol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .symbol-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .symbol-card:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.06);
+        }
+        .symbol-card.tier-wild { border-left: 3px solid var(--cyan); }
+        .symbol-card.tier-scatter { border-left: 3px solid var(--yellow); }
+        .symbol-card.tier-high { border-left: 3px solid var(--magenta); }
+        .symbol-card.tier-low { border-left: 3px solid rgba(100, 130, 180, 0.4); }
+
+        .symbol-preview {
+            width: 140px;
+            height: 130px;
+            margin: 0 auto 12px;
+            border: 1px dashed rgba(0, 240, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        .symbol-preview .preview-glyph {
+            font-size: 40px;
+            opacity: 0.3;
+        }
+        .symbol-preview .preview-size {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--dim);
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+        }
+
+        .sym-id {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        .sym-name {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--dim);
+            margin-bottom: 4px;
+        }
+        .sym-tier {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .tier-wild .sym-tier { color: var(--cyan); background: rgba(0, 240, 255, 0.08); }
+        .tier-scatter .sym-tier { color: var(--yellow); background: rgba(255, 230, 0, 0.08); }
+        .tier-high .sym-tier { color: var(--magenta); background: rgba(255, 0, 170, 0.08); }
+        .tier-low .sym-tier { color: #6682b4; background: rgba(100, 130, 180, 0.08); }
+        .sym-id-tag { color: var(--cyan); }
+        .tier-scatter .sym-id-tag { color: var(--yellow); }
+        .tier-high .sym-id-tag { color: var(--magenta); }
+        .tier-low .sym-id-tag { color: #6682b4; }
+
+        .sym-pays {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--dim);
+            margin-top: 8px;
+        }
+
+        /* ─── Template Canvas ────────────────── */
+        .template-row {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .template-box {
+            text-align: center;
+        }
+        .template-box canvas {
+            border-radius: 8px;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+        .template-box canvas:hover {
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+        }
+        .template-box .t-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--dim);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+        .template-box .t-action {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--cyan);
+            opacity: 0.6;
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        /* ─── Specs Table ────────────────────── */
+        .specs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+        }
+        .specs-table th {
+            text-align: left;
+            padding: 10px 14px;
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--cyan);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+            background: rgba(0, 240, 255, 0.03);
+        }
+        .specs-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text);
+        }
+        .specs-table tr:hover td { background: rgba(0, 240, 255, 0.02); }
+        .spec-val { color: var(--cyan); font-weight: 600; }
+        .spec-note { color: var(--dim); font-size: 11px; }
+
+        /* ─── Colour Palette ─────────────────── */
+        .palette-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .swatch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .swatch-color {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .swatch-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--dim);
+            letter-spacing: 1px;
+        }
+        .swatch-hex {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text);
+        }
+
+        /* ─── Checklist ──────────────────────── */
+        .checklist {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .checklist li {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--dim);
+            padding: 8px 12px;
+            background: rgba(0, 240, 255, 0.02);
+            border: 1px solid rgba(0, 240, 255, 0.06);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checklist li::before {
+            content: '○';
+            color: var(--cyan);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .checklist li .file-name {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ─── Tip boxes ──────────────────────── */
+        .tip {
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 16px;
+        }
+        .tip-cyan {
+            background: rgba(0, 240, 255, 0.04);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            color: rgba(180, 230, 255, 0.8);
+        }
+        .tip-yellow {
+            background: rgba(255, 230, 0, 0.04);
+            border: 1px solid rgba(255, 230, 0, 0.12);
+            color: rgba(255, 240, 170, 0.8);
+        }
+        .tip-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .tip-cyan .tip-label { color: var(--cyan); }
+        .tip-yellow .tip-label { color: var(--yellow); }
+
+        /* ─── Safe zone diagram ──────────────── */
+        .safezone-wrap {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .safezone-diagram {
+            width: 256px;
+            height: 256px;
+            position: relative;
+            background: #050510;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            flex-shrink: 0;
+        }
+        .sz-outer {
+            position: absolute;
+            inset: 0;
+            border: 2px dashed rgba(255, 0, 170, 0.3);
+            border-radius: 12px;
+        }
+        .sz-safe {
+            position: absolute;
+            top: 16px; left: 16px; right: 16px; bottom: 16px;
+            border: 2px dashed rgba(0, 240, 255, 0.4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sz-core {
+            position: absolute;
+            top: 40px; left: 40px; right: 40px; bottom: 50px;
+            border: 1px dashed rgba(0, 255, 136, 0.3);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            opacity: 0.2;
+        }
+        .sz-label {
+            position: absolute;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 1px;
+        }
+        .sz-label.outer { top: 4px; left: 8px; color: rgba(255, 0, 170, 0.5); }
+        .sz-label.safe { top: 20px; left: 24px; color: rgba(0, 240, 255, 0.5); }
+        .sz-label.core { top: 44px; left: 48px; color: rgba(0, 255, 136, 0.5); }
+
+        .safezone-notes {
+            flex: 1;
+            min-width: 250px;
+        }
+        .safezone-notes p {
+            font-size: 13px;
+            color: var(--dim);
+            margin-bottom: 10px;
+        }
+        .safezone-notes strong { color: var(--text); }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--card-border);
+            margin: 50px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ═══ HEADER ═══ -->
+    <div class="guide-header">
+        <h1>ASSET GUIDE</h1>
+        <p>NEON VAULT — CYBERPUNK SLOT GAME — DESIGN SPECIFICATIONS</p>
+    </div>
+
+    <!-- ═══ 01: GAME LAYOUT ═══ -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">01</span>
+            <h2>GAME LAYOUT</h2>
+        </div>
+        <p class="section-desc">Where each asset appears in the game. The reels are the focal point — symbols need to be readable at the sizes shown.</p>
+
+        <div class="layout-mockup">
+            <div class="mockup-zone zone-bg">BACKGROUND — 900×500px (1800×1000 @2x)</div>
+            <div class="mockup-zone zone-logo">LOGO — ~400×60px</div>
+            <div class="mockup-zone zone-reels">REEL AREA — 5 reels × 3 rows — each cell is 140×130px</div>
+            <div class="mockup-zone zone-controls">CONTROLS BAR (CSS — no assets needed)</div>
+
+            <div class="mockup-reel-grid">
+                <div class="mockup-cell"><span class="cell-sym">◈</span>WILD</div>
+                <div class="mockup-cell"><span class="cell-sym">K</span>KING</div>
+                <div class="mockup-cell"><span class="cell-sym">◆</span>DIAMOND</div>
+                <div class="mockup-cell"><span class="cell-sym">▲</span>EMERALD</div>
+                <div class="mockup-cell"><span class="cell-sym">J</span>JACK</div>
+
+                <div class="mockup-cell"><span class="cell-sym">A</span>ACE</div>
+                <div class="mockup-cell"><span class="cell-sym">●</span>RUBY</div>
+                <div class="mockup-cell"><span class="cell-sym">⬡</span>SCATTER</div>
+                <div class="mockup-cell"><span class="cell-sym">Q</span>QUEEN</div>
+                <div class="mockup-cell"><span class="cell-sym">◆</span>DIAMOND</div>
+
+                <div class="mockup-cell"><span class="cell-sym">▲</span>EMERALD</div>
+                <div class="mockup-cell"><span class="cell-sym">J</span>JACK</div>
+                <div class="mockup-cell"><span class="cell-sym">K</span>KING</div>
+                <div class="mockup-cell"><span class="cell-sym">◈</span>WILD</div>
+                <div class="mockup-cell"><span class="cell-sym">●</span>RUBY</div>
+            </div>
+
+            <div class="mockup-label" style="top:11.5%;left:10%;">↑ INFO BAR (CSS)</div>
+            <div class="mockup-label" style="top:18%;right:3%;">140×130px per cell</div>
+        </div>
+    </div>
+
+    <!-- ═══ 02: SYMBOL SPECS ═══ -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">02</span>
+            <h2>SYMBOL ASSETS</h2>
+        </div>
+        <p class="section-desc">9 symbols total. Design at 256×256px, they'll render at 140×130px on the reels. PNG with transparency.</p>
+
+        <div class="symbol-grid">
+            <div class="symbol-card tier-wild">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">◈</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">W</span></div>
+                <div class="sym-name">Wild</div>
+                <div class="sym-tier">SPECIAL — SUBSTITUTES ALL</div>
+                <div class="sym-pays">3×=50 · 4×=200 · 5×=1000</div>
+            </div>
+
+            <div class="symbol-card tier-scatter">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">⬡</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">S</span></div>
+                <div class="sym-name">Scatter</div>
+                <div class="sym-tier">SPECIAL — TRIGGERS BONUS</div>
+                <div class="sym-pays">Anywhere: 3×=5 · 4×=20 · 5×=100</div>
+            </div>
+
+            <div class="symbol-card tier-high">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">◆</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">H1</span></div>
+                <div class="sym-name">Diamond</div>
+                <div class="sym-tier">HIGH PAY</div>
+                <div class="sym-pays">3×=30 · 4×=100 · 5×=500</div>
+            </div>
+
+            <div class="symbol-card tier-high">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">●</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">H2</span></div>
+                <div class="sym-name">Ruby</div>
+                <div class="sym-tier">HIGH PAY</div>
+                <div class="sym-pays">3×=20 · 4×=75 · 5×=250</div>
+            </div>
+
+            <div class="symbol-card tier-high">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">▲</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">H3</span></div>
+                <div class="sym-name">Emerald</div>
+                <div class="sym-tier">HIGH PAY</div>
+                <div class="sym-pays">3×=15 · 4×=50 · 5×=150</div>
+            </div>
+
+            <div class="symbol-card tier-low">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">A</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">L1</span></div>
+                <div class="sym-name">Ace</div>
+                <div class="sym-tier">LOW PAY</div>
+                <div class="sym-pays">3×=10 · 4×=30 · 5×=100</div>
+            </div>
+
+            <div class="symbol-card tier-low">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">K</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">L2</span></div>
+                <div class="sym-name">King</div>
+                <div class="sym-tier">LOW PAY</div>
+                <div class="sym-pays">3×=8 · 4×=25 · 5×=75</div>
+            </div>
+
+            <div class="symbol-card tier-low">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">Q</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">L3</span></div>
+                <div class="sym-name">Queen</div>
+                <div class="sym-tier">LOW PAY</div>
+                <div class="sym-pays">3×=5 · 4×=20 · 5×=50</div>
+            </div>
+
+            <div class="symbol-card tier-low">
+                <div class="symbol-preview">
+                    <span class="preview-glyph">J</span>
+                    <span class="preview-size">256×256</span>
+                </div>
+                <div class="sym-id"><span class="sym-id-tag">L4</span></div>
+                <div class="sym-name">Jack</div>
+                <div class="sym-tier">LOW PAY</div>
+                <div class="sym-pays">3×=3 · 4×=15 · 5×=30</div>
+            </div>
+        </div>
+
+        <div class="tip tip-cyan" style="margin-top:20px;">
+            <span class="tip-label">DESIGN HIERARCHY</span>
+            Wild & Scatter should be the most visually striking — animated glow, unique shape, brighter colours. High-pay symbols should have more detail and saturation than low-pay. Low-pay card symbols should feel clean but subdued so they don't compete with premium symbols.
+        </div>
+    </div>
+
+    <!-- ═══ 03: SAFE ZONES ═══ -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">03</span>
+            <h2>SYMBOL SAFE ZONES</h2>
+        </div>
+        <p class="section-desc">Keep your main artwork within the safe zone. The outer area may be clipped or overlapped by winning payline highlights.</p>
+
+        <div class="card">
+            <div class="safezone-wrap">
+                <div class="safezone-diagram">
+                    <div class="sz-outer"></div>
+                    <div class="sz-safe"></div>
+                    <div class="sz-core">◆</div>
+                    <span class="sz-label outer">CANVAS 256×256</span>
+                    <span class="sz-label safe">SAFE ZONE 224×224</span>
+                    <span class="sz-label core">CORE ART 176×166</span>
+                </div>
+                <div class="safezone-notes">
+                    <p><strong>Canvas (256×256):</strong> Full asset boundary. Outer 16px on each side may be slightly clipped when rendered on the reels.</p>
+                    <p><strong>Safe Zone (224×224):</strong> Everything important should be inside this. Subtle glow/effects can extend to the edge.</p>
+                    <p><strong>Core Art (176×166):</strong> Where your main symbol graphic sits. This area is always fully visible and clear.</p>
+                    <p><strong>Bottom margin:</strong> Leave 50px at the bottom for the symbol label text (optional — you can bake labels into your asset or remove them from code).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 04: COLOUR PALETTE ═══ -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">04</span>
+            <h2>COLOUR PALETTE</h2>
+        </div>
+        <p class="section-desc">Core colours used throughout the game. Your symbols should feel consistent with this palette — they don't need to match exactly, but should live in this neon-on-dark world.</p>
+
+        <div class="card">
+            <div class="palette-row">
+                <div class="swatch">
+                    <div class="swatch-color" style="background:linear-gradient(135deg,#00f0ff,#00b8cc);box-shadow:0 0 20px rgba(0,240,255,0.3);"></div>
+                    <div class="swatch-label">CYAN</div>
+                    <div class="swatch-hex">#00F0FF</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background:linear-gradient(135deg,#ff00aa,#cc0088);box-shadow:0 0 20px rgba(255,0,170,0.3);"></div>
+                    <div class="swatch-label">MAGENTA</div>
+                    <div class="swatch-hex">#FF00AA</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background:linear-gradient(135deg,#b400ff,#8800cc);box-shadow:0 0 20px rgba(180,0,255,0.3);"></div>
+                    <div class="swatch-label">PURPLE</div>
+                    <div class="swatch-hex">#B400FF</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background:linear-gradient(135deg,#ffe600,#ccb800);box-shadow:0 0 20px rgba(255,230,0,0.3);"></div>
+                    <div class="swatch-label">YELLOW</div>
+                    <div class="swatch-hex">#FFE600</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background:linear-gradient(135deg,#00ff88,#00cc66);box-shadow:0 0 20px rgba(0,255,136,0.3);"></div>
+                    <div class="swatch-label">GREEN</div>
+                    <div class="swatch-hex">#00FF88</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background:#06060f;border-color:rgba(255,255,255,0.15);"></div>
+                    <div class="swatch-label">BG DEEP</div>
+                    <div class="swatch-hex">#06060F</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background:#0c0c24;border-color:rgba(255,255,255,0.15);"></div>
+                    <div class="swatch-label">BG CARD</div>
+                    <div class="swatch-hex">#0C0C24</div>
+                </div>
+            </div>
+
+            <div class="tip tip-yellow" style="margin-top:16px;">
+                <span class="tip-label">COLOUR MAPPING</span>
+                Wild → Cyan/Magenta · Scatter → Yellow/Green · Diamond → Cyan · Ruby → Magenta · Emerald → Green · Card symbols → muted blue-greys
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 05: ALL ASSETS ═══ -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">05</span>
+            <h2>FULL ASSET CHECKLIST</h2>
+        </div>
+        <p class="section-desc">Everything you need to create. Priority order — start from the top.</p>
+
+        <div class="card">
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th>ASSET</th>
+                        <th>FILE NAME</th>
+                        <th>SIZE</th>
+                        <th>FORMAT</th>
+                        <th>PRIORITY</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Wild Symbol</td><td class="spec-val">wild.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>Scatter Symbol</td><td class="spec-val">scatter.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>Diamond Symbol</td><td class="spec-val">diamond.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>Ruby Symbol</td><td class="spec-val">ruby.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>Emerald Symbol</td><td class="spec-val">emerald.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>Ace Symbol</td><td class="spec-val">ace.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>King Symbol</td><td class="spec-val">king.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>Queen Symbol</td><td class="spec-val">queen.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td>Jack Symbol</td><td class="spec-val">jack.png</td><td>256×256</td><td>PNG (transparent)</td><td>🔴 Must have</td></tr>
+                    <tr><td colspan="5" style="height:8px; border:none;"></td></tr>
+                    <tr><td>Background</td><td class="spec-val">bg.png</td><td>1800×1000</td><td>PNG or JPG</td><td>🟡 Nice to have</td></tr>
+                    <tr><td>Logo / Title</td><td class="spec-val">logo.png</td><td>800×120</td><td>PNG (transparent)</td><td>🟡 Nice to have</td></tr>
+                    <tr><td colspan="5" style="height:8px; border:none;"></td></tr>
+                    <tr><td>Bonus Cell (Locked)</td><td class="spec-val">cell-locked.png</td><td>240×180</td><td>PNG (transparent)</td><td>🟢 Optional</td></tr>
+                    <tr><td>Bonus Cell (Low Win)</td><td class="spec-val">cell-low.png</td><td>240×180</td><td>PNG (transparent)</td><td>🟢 Optional</td></tr>
+                    <tr><td>Bonus Cell (Mid Win)</td><td class="spec-val">cell-mid.png</td><td>240×180</td><td>PNG (transparent)</td><td>🟢 Optional</td></tr>
+                    <tr><td>Bonus Cell (High Win)</td><td class="spec-val">cell-high.png</td><td>240×180</td><td>PNG (transparent)</td><td>🟢 Optional</td></tr>
+                    <tr><td>Bonus Cell (Mega Win)</td><td class="spec-val">cell-mega.png</td><td>240×180</td><td>PNG (transparent)</td><td>🟢 Optional</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══ 06: DOWNLOADABLE TEMPLATES ═══ -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">06</span>
+            <h2>DOWNLOADABLE TEMPLATES</h2>
+        </div>
+        <p class="section-desc">Right-click → Save As to download these template canvases. Open them in Figma, Photoshop, or any image editor as your starting point.</p>
+
+        <div class="card">
+            <div class="template-row" id="template-row"></div>
+        </div>
+    </div>
+
+    <!-- ═══ 07: FILE STRUCTURE ═══ -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">07</span>
+            <h2>FILE STRUCTURE</h2>
+        </div>
+        <p class="section-desc">Organise your assets like this. When you're ready, share the assets folder and I'll wire everything into the game.</p>
+
+        <div class="card" style="font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--dim); line-height:2;">
+            <span style="color:var(--cyan);">neon-vault/</span><br>
+            ├── <span style="color:var(--text);">neon-vault.html</span><br>
+            └── <span style="color:var(--cyan);">assets/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--magenta);">wild.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--yellow);">scatter.png</span> &nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--magenta);">diamond.png</span> &nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--magenta);">ruby.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--magenta);">emerald.png</span> &nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#6682b4;">ace.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#6682b4;">king.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#6682b4;">queen.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#6682b4;">jack.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 256×256</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--purple);">bg.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 1800×1000</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:var(--yellow);">logo.png</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--dim);">← 800×120</span><br>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══ TEMPLATE GENERATOR ═══ -->
+<script>
+function createTemplate(name, w, h, guides, label) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#06060f';
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 16) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+    for (let y = 0; y < h; y += 16) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+    // Center crosshair
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Safe zone
+    if (guides) {
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 1;
+        ctx.strokeRect(guides.safe, guides.safe, w - guides.safe * 2, h - guides.safe * 2);
+
+        if (guides.core) {
+            ctx.strokeStyle = 'rgba(0, 255, 136, 0.25)';
+            ctx.strokeRect(guides.core, guides.core, w - guides.core * 2, h - guides.core * 2 - (guides.bottomExtra || 0));
+        }
+        ctx.setLineDash([]);
+    }
+
+    // Border
+    ctx.strokeStyle = 'rgba(255, 0, 170, 0.2)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, w - 2, h - 2);
+
+    // Label
+    ctx.font = '11px "Courier New", monospace';
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.3)';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${label} — ${w}×${h}px`, w / 2, h - 8);
+
+    // Size label top
+    ctx.fillText(name.toUpperCase(), w / 2, 16);
+
+    return c;
+}
+
+const templates = [
+    { name: 'Symbol', w: 256, h: 256, guides: { safe: 16, core: 40, bottomExtra: 10 }, label: 'SYMBOL TEMPLATE' },
+    { name: 'Background', w: 450, h: 250, guides: { safe: 10 }, label: 'BG TEMPLATE (1800×1000 actual)' },
+    { name: 'Logo', w: 400, h: 60, guides: { safe: 4 }, label: 'LOGO TEMPLATE (800×120 actual)' },
+    { name: 'Bonus Cell', w: 240, h: 180, guides: { safe: 12, core: 30 }, label: 'BONUS CELL TEMPLATE' },
+];
+
+const row = document.getElementById('template-row');
+templates.forEach(t => {
+    const canvas = createTemplate(t.name, t.w, t.h, t.guides, t.label);
+    const displayW = t.w > 300 ? t.w * 0.6 : t.w;
+    const displayH = t.h > 300 ? t.h * 0.6 : t.h;
+    canvas.style.width = displayW + 'px';
+    canvas.style.height = displayH + 'px';
+    canvas.title = `Right-click → Save As → ${t.name.toLowerCase()}-template.png`;
+
+    const box = document.createElement('div');
+    box.className = 'template-box';
+    box.appendChild(canvas);
+    box.innerHTML += `<div class="t-label">${t.name} — ${t.w}×${t.h}px</div><div class="t-action">Right-click → Save As</div>`;
+    row.appendChild(box);
+});
+</script>
+
+</body>
+</html>
