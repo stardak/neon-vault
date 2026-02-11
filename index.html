@@ -418,6 +418,8 @@
         .side-btn { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; padding:6px 14px; border-radius:6px; border:1px solid rgba(0,240,255,0.15); background:rgba(0,240,255,0.04); color:var(--text-dim); cursor:pointer; transition:all 0.15s; }
         .side-btn:hover { border-color:rgba(0,240,255,0.4); color:var(--neon-cyan); }
         .side-btn.active { border-color:var(--neon-magenta); color:var(--neon-magenta); background:rgba(255,0,170,0.08); box-shadow:0 0 12px rgba(255,0,170,0.15); }
+        .speed-btn.active { border-color:var(--neon-yellow); color:var(--neon-yellow); background:rgba(255,230,0,0.08); box-shadow:0 0 12px rgba(255,230,0,0.2); }
+        .speed-btn.active.sturbo { border-color:var(--neon-green); color:var(--neon-green); background:rgba(0,255,136,0.08); box-shadow:0 0 16px rgba(0,255,136,0.25); }
         .side-btns { display:flex; gap:8px; position:absolute; top:-40px; right:0; }
 
         /* ═══ Responsive ═══ */
@@ -550,7 +552,8 @@
 
         <div class="side-btns">
             <button class="side-btn" id="btn-auto">AUTO</button>
-            <button class="side-btn" id="btn-turbo">TURBO</button>
+            <button class="side-btn speed-btn" id="btn-turbo">TURBO</button>
+            <button class="side-btn speed-btn" id="btn-sturbo">S.TURBO</button>
             <button class="side-btn" id="btn-mute">🔊</button>
         </div>
     </div>
@@ -770,7 +773,10 @@ document.addEventListener('click',()=>SFX.init(),{once:true});
 
 // ─── State ─────────────────────────────────────────────────
 let balance=1000, bet=1, totalWon=0, totalBet=0;
-let spinning=false, autoplay=false, turbo=false, inBonus=false;
+let spinning=false, autoplay=false, inBonus=false;
+let speedMode=0; // 0=Normal, 1=Turbo, 2=Super Turbo
+function isTurbo(){return speedMode>=1;}
+function isSuperTurbo(){return speedMode===2;}
 const BETS=[0.20,0.50,1,2,5,10,25,50];
 let betIdx=2;
 
@@ -938,27 +944,100 @@ function genFreeSpinOutcome(){
     return grid;
 }
 
+function instantRevealReel(reel,idx,tgt){
+    for(let s=0;s<ROWS;s++){reel.sprites[s].texture=symTex[tgt[idx][s]];reel.sprites[s].symId=tgt[idx][s];reel.sprites[s].y=s*SYM_H;reel.sprites[s].alpha=1;}
+    reelFlash(idx);symbolLandPop(idx,tgt[idx]);
+}
+
 function animateReels(tgt){
+    // Pre-scan for scatter anticipation (shared by all modes)
+    let anticipationStartReel=-1,earlyScCount=0;
+    for(let r=0;r<REELS;r++){
+        if(tgt[r].includes('S'))earlyScCount++;
+        if(earlyScCount>=2&&r<REELS-1){anticipationStartReel=r+1;break;}
+    }
+    const hasAnticipation=anticipationStartReel>0;
+
+    // ── SUPER TURBO: instant flash reveal (with scatter anticipation support) ──
+    if(isSuperTurbo()){
+        return new Promise(async resolve=>{
+            if(!hasAnticipation){
+                // No anticipation: instant flash all reels with tiny stagger
+                for(let idx=0;idx<REELS;idx++){
+                    instantRevealReel(reels[idx],idx,tgt);
+                    if(tgt[idx].includes('S')){SFX.scatterLand();scatterFlash(idx);}
+                }
+                SFX.reelStop(2);
+                // Brief white flash overlay
+                const flash=new PIXI.Graphics();flash.beginFill(0xffffff,0.12);flash.drawRect(GRID_X,GRID_Y,GRID_W,GRID_H);flash.endFill();reelLayer.addChild(flash);
+                let fa=0.12;const ff=()=>{fa-=0.02;flash.alpha=fa;if(fa>0)requestAnimationFrame(ff);else{reelLayer.removeChild(flash);flash.destroy();}};requestAnimationFrame(ff);
+                await new Promise(r=>setTimeout(r,80));
+                resolve();
+            }else{
+                // Instant reveal reels before anticipation, then slow the rest
+                let scattersLanded=0;
+                for(let idx=0;idx<anticipationStartReel;idx++){
+                    instantRevealReel(reels[idx],idx,tgt);
+                    SFX.reelStop(idx);
+                    if(tgt[idx].includes('S')){scattersLanded++;SFX.scatterLand();scatterFlash(idx);}
+                }
+                if(scattersLanded>=2)startAnticipation();
+                // Slow-animate remaining reels
+                let settled=0;const totalSlow=REELS-anticipationStartReel;
+                reels.forEach((reel,idx)=>{
+                    if(idx<anticipationStartReel)return;
+                    const pause=400+(idx-anticipationStartReel)*300;
+                    const dur=1500+(idx-anticipationStartReel)*200;
+                    const strip=STRIPS[idx],spinSyms=[];
+                    for(let i=0;i<30+idx*5;i++)spinSyms.push(strip[Math.floor(Math.random()*strip.length)]);
+                    spinSyms.push(...tgt[idx]);
+                    const ts=spinSyms.length-ROWS,st=performance.now()+pause;
+                    const bounceDur=120,bounceAmt=0.35;
+                    let bouncing=false,landed=false;
+                    function easeSlot(t){if(t<0.15)return t/0.15*0.25;if(t<0.45)return 0.25+(t-0.15)/0.3*0.35;const d=(t-0.45)/0.55;return 0.6+0.4*(1-Math.pow(1-d,2.8));}
+                    function tick(now){
+                        const el=now-st;if(el<0){requestAnimationFrame(tick);return;}
+                        if(!bouncing){
+                            const prog=Math.min(el/dur,1),e=Math.min(easeSlot(prog),1);
+                            const step=e*ts,is=Math.floor(step),fr=step-is;
+                            const speed=prog<0.5?1:Math.max(0,(1-prog)*2);
+                            const blurAlpha=speed>0.3?0.65+0.35*(1-speed):1;
+                            for(let s=0;s<ROWS;s++){const si=Math.min(is+s,spinSyms.length-1),sid=spinSyms[si];if(reel.sprites[s].symId!==sid){reel.sprites[s].texture=symTex[sid];reel.sprites[s].symId=sid;}reel.sprites[s].y=s*SYM_H-fr*SYM_H*0.7;reel.sprites[s].alpha=blurAlpha;}
+                            if(prog>=1){bouncing=true;for(let s=0;s<ROWS;s++){reel.sprites[s].texture=symTex[tgt[idx][s]];reel.sprites[s].symId=tgt[idx][s];reel.sprites[s].alpha=1;}requestAnimationFrame(tick);return;}
+                        }else if(!landed){
+                            const bt=Math.min((now-st-dur)/bounceDur,1);
+                            const bounce=bounceAmt*Math.sin(bt*Math.PI)*Math.pow(1-bt,1.5);
+                            for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H+bounce*SYM_H;}
+                            if(bt>=1){landed=true;SFX.reelStop(idx);
+                                if(tgt[idx].includes('S')){scattersLanded++;SFX.scatterLand();scatterFlash(idx);}
+                                for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H;}
+                                reelFlash(idx);symbolLandPop(idx,tgt[idx]);settled++;
+                                if(settled===totalSlow){stopAnticipation();resolve();}
+                                return;}
+                        }
+                        requestAnimationFrame(tick);
+                    }
+                    requestAnimationFrame(tick);
+                });
+            }
+        });
+    }
+
+    // ── NORMAL / TURBO: full reel spinning animation ──
     return new Promise(resolve=>{
-        const bd=turbo?80:200,sd=turbo?500:1200;let settled=0;
-        // Pre-scan for scatter anticipation
+        const bd=isTurbo()?80:200,sd=isTurbo()?500:1200;let settled=0;
         let scattersLanded=0,anticipationActive=false;
-        let anticipationStartReel=-1,earlyScCount=0;
-        for(let r=0;r<REELS;r++){
-            if(tgt[r].includes('S'))earlyScCount++;
-            if(earlyScCount>=2&&r<REELS-1){anticipationStartReel=r+1;break;}
-        }
         reels.forEach((reel,idx)=>{
-            const isSlowReel=anticipationStartReel>0&&idx>=anticipationStartReel;
-            const anticipationPause=turbo?400:800;
-            const delay=isSlowReel?anticipationStartReel*bd+sd+anticipationStartReel*(turbo?80:180)+anticipationPause+(idx-anticipationStartReel)*(turbo?300:600):idx*bd;
-            const dur=isSlowReel?(turbo?1500:2500)+(idx-anticipationStartReel)*(turbo?200:400):sd+idx*(turbo?80:180);
+            const isSlowReel=hasAnticipation&&idx>=anticipationStartReel;
+            const anticipationPause=isTurbo()?400:800;
+            const delay=isSlowReel?anticipationStartReel*bd+sd+anticipationStartReel*(isTurbo()?80:180)+anticipationPause+(idx-anticipationStartReel)*(isTurbo()?300:600):idx*bd;
+            const dur=isSlowReel?(isTurbo()?1500:2500)+(idx-anticipationStartReel)*(isTurbo()?200:400):sd+idx*(isTurbo()?80:180);
             const strip=STRIPS[idx],spinSyms=[];
-            const extraSyms=isSlowReel?(turbo?30+idx*5:45+idx*8):(turbo?14+idx*3:20+idx*4);
+            const extraSyms=isSlowReel?(isTurbo()?30+idx*5:45+idx*8):(isTurbo()?14+idx*3:20+idx*4);
             for(let i=0;i<extraSyms;i++)spinSyms.push(strip[Math.floor(Math.random()*strip.length)]);
             spinSyms.push(...tgt[idx]);
             const ts=spinSyms.length-ROWS,st=performance.now()+delay;
-            const bounceDur=turbo?120:220;
+            const bounceDur=isTurbo()?120:220;
             const bounceAmt=0.35;
             let bouncing=false,landed=false;
             function easeSlot(t){
@@ -993,12 +1072,10 @@ function animateReels(tgt){
                     if(bt>=1){
                         landed=true;
                         SFX.reelStop(idx);
-                        // Scatter landing effects
                         if(tgt[idx].includes('S')){
                             scattersLanded++;
                             SFX.scatterLand();
                             scatterFlash(idx);
-                            // Start anticipation when 2nd scatter lands and more reels remain
                             if(scattersLanded>=2&&!anticipationActive&&settled<REELS-1){
                                 anticipationActive=true;
                                 startAnticipation();
@@ -1559,7 +1636,7 @@ async function doFreeSpin(){
         updateFreeSpinHUD();
     }
 
-    const delay=turbo?400:800;
+    const delay=isSuperTurbo()?150:isTurbo()?400:800;
     setTimeout(()=>doFreeSpin(),delay);
 }
 
@@ -1583,7 +1660,7 @@ async function endFreeSpins(){
     spinsSinceLastScatterBonus=0;
     nextScatterAt=25+Math.floor(Math.random()*51);
     updateUI();
-    if(autoplay&&balance>=bet)setTimeout(()=>doSpin(),turbo?300:700);
+    if(autoplay&&balance>=bet)setTimeout(()=>doSpin(),isSuperTurbo()?100:isTurbo()?300:700);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1687,7 +1764,7 @@ async function doSpin(){
         return;
     }
 
-    if(autoplay&&balance>=bet)setTimeout(()=>doSpin(),turbo?300:700);
+    if(autoplay&&balance>=bet)setTimeout(()=>doSpin(),isSuperTurbo()?100:isTurbo()?300:700);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1706,7 +1783,13 @@ document.getElementById('spin-btn').addEventListener('click',doSpin);
 document.getElementById('bet-up').addEventListener('click',()=>{if(!spinning&&!inBonus){betIdx=Math.min(betIdx+1,BETS.length-1);bet=BETS[betIdx];SFX.click();updateUI();}});
 document.getElementById('bet-dn').addEventListener('click',()=>{if(!spinning&&!inBonus){betIdx=Math.max(betIdx-1,0);bet=BETS[betIdx];SFX.click();updateUI();}});
 document.getElementById('btn-auto').addEventListener('click',()=>{autoplay=!autoplay;document.getElementById('btn-auto').classList.toggle('active',autoplay);if(autoplay&&!spinning&&!inBonus)doSpin();});
-document.getElementById('btn-turbo').addEventListener('click',()=>{turbo=!turbo;document.getElementById('btn-turbo').classList.toggle('active',turbo);});
+function updateSpeedBtns(){
+    const tb=document.getElementById('btn-turbo'),st=document.getElementById('btn-sturbo');
+    tb.classList.toggle('active',speedMode===1);
+    st.classList.toggle('active',speedMode===2);st.classList.toggle('sturbo',speedMode===2);
+}
+document.getElementById('btn-turbo').addEventListener('click',()=>{speedMode=speedMode===1?0:1;SFX.click();updateSpeedBtns();});
+document.getElementById('btn-sturbo').addEventListener('click',()=>{speedMode=speedMode===2?0:2;SFX.click();updateSpeedBtns();});
 document.getElementById('btn-mute').addEventListener('click',()=>{const m=SFX.toggleMute();document.getElementById('btn-mute').textContent=m?'🔇':'🔊';document.getElementById('btn-mute').classList.toggle('active',m);});
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();doSpin();}});
 
