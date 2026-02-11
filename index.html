@@ -437,7 +437,7 @@
         .side-btn.active { border-color:var(--neon-magenta); color:var(--neon-magenta); background:rgba(255,0,170,0.08); box-shadow:0 0 12px rgba(255,0,170,0.15); }
         .speed-btn.active { border-color:var(--neon-yellow); color:var(--neon-yellow); background:rgba(255,230,0,0.08); box-shadow:0 0 12px rgba(255,230,0,0.2); }
         .speed-btn.active.sturbo { border-color:var(--neon-green); color:var(--neon-green); background:rgba(0,255,136,0.08); box-shadow:0 0 16px rgba(0,255,136,0.25); }
-        .side-btns { display:flex; gap:8px; position:absolute; top:-40px; right:0; }
+        .side-btns { display:flex; gap:8px; position:absolute; top:8px; right:8px; z-index:30; }
 
         /* ═══ Responsive ═══ */
         @media(max-width:920px){
@@ -453,7 +453,7 @@
             #spin-btn { width:110px; height:110px; }
             #spin-btn-wrap { margin-top:-45px; }
             .bet-btn { width:36px; height:36px; font-size:18px; }
-            .side-btns { top:-34px; gap:5px; }
+            .side-btns { top:6px; right:6px; gap:5px; }
             .side-btn { font-size:9px; padding:5px 10px; }
             /* Bonus overlay */
             #bonus-overlay { padding:8px 0; }
@@ -476,7 +476,7 @@
             #spin-btn { width:90px; height:90px; }
             #spin-btn-wrap { margin-top:-35px; }
             .bet-btn { width:32px; height:32px; font-size:16px; }
-            .side-btns { top:-30px; }
+            .side-btns { top:4px; right:4px; }
             .side-btn { font-size:8px; padding:4px 8px; }
             #bonus-grid { grid-template-columns:repeat(3,1fr); padding:0 8px; gap:5px; }
             .bonus-cell .cell-icon img { width:26px !important; }
