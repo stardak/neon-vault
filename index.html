@@ -2168,7 +2168,7 @@ function genEnhancedOutcome(){
     // Ensure at least one wild appears
     let hasWild=false;
     for(let r=0;r<REELS;r++)for(let row=0;row<ROWS;row++)if(grid[r][row]==='W')hasWild=true;
-    if(\!hasWild){
+    if(!hasWild){
         const r=Math.floor(Math.random()*REELS);
         const row=Math.floor(Math.random()*ROWS);
         grid[r][row]='W';
