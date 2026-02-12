@@ -1248,22 +1248,26 @@ function animateReels(tgt){
                     const ts=spinSyms.length-ROWS,st=performance.now()+pause;
                     const bounceDur=120,bounceAmt=0.35;
                     let bouncing=false,landed=false;
-                    function easeSlot(t){if(t<0.15)return t/0.15*0.25;if(t<0.45)return 0.25+(t-0.15)/0.3*0.35;const d=(t-0.45)/0.55;return 0.6+0.4*(1-Math.pow(1-d,2.8));}
+                    const stBlur=new PIXI.Graphics();stBlur.alpha=0;reelLayer.addChild(stBlur);
+                    function easeSlot(t){if(t<0.12)return t/0.12*0.2;if(t<0.4)return 0.2+(t-0.12)/0.28*0.35;const d=(t-0.4)/0.6;return 0.55+0.45*(1-Math.pow(1-d,3.2));}
                     function tick(now){
                         if(stReelLanded[idx])return;
                         const el=now-st;if(el<0){requestAnimationFrame(tick);return;}
                         if(!bouncing){
                             const prog=Math.min(el/dur,1),e=Math.min(easeSlot(prog),1);
                             const step=e*ts,is=Math.floor(step),fr=step-is;
-                            const speed=prog<0.5?1:Math.max(0,(1-prog)*2);
-                            const blurAlpha=speed>0.3?0.65+0.35*(1-speed):1;
-                            for(let s=0;s<ROWS;s++){const si=Math.min(is+s,spinSyms.length-1),sid=spinSyms[si];if(reel.sprites[s].symId!==sid){reel.sprites[s].texture=symTex[sid];reel.sprites[s].symId=sid;}reel.sprites[s].y=s*SYM_H-fr*SYM_H*0.7;reel.sprites[s].alpha=blurAlpha;}
-                            if(prog>=1){bouncing=true;for(let s=0;s<ROWS;s++){reel.sprites[s].texture=symTex[tgt[idx][s]];reel.sprites[s].symId=tgt[idx][s];reel.sprites[s].alpha=1;}requestAnimationFrame(tick);return;}
+                            const speed=prog<0.12?prog/0.12:prog>0.4?Math.pow((1-prog)/0.6,1.5):1;
+                            const cs=Math.max(0,Math.min(1,speed));
+                            const stretchY=1+cs*0.3;const blurAlpha=1-cs*0.25;
+                            for(let s=-1;s<=ROWS;s++){const sprIdx=s+1;if(sprIdx<0||sprIdx>=reel.sprites.length)continue;const sp=reel.sprites[sprIdx];const si=Math.min(Math.max(is+s,0),spinSyms.length-1),sid=spinSyms[si];if(sp.symId!==sid){sp.texture=symTex[sid];sp.symId=sid;}const baseY=s*SYM_H-fr*SYM_H;const h=(SYM_H-4)*stretchY;sp.height=h;sp.y=baseY+(SYM_H-4-h)/2;if(s===-1){sp.alpha=blurAlpha*Math.max(0,Math.min(1,(baseY+SYM_H)/SYM_H));}else if(s===ROWS){sp.alpha=blurAlpha*Math.max(0,Math.min(1,1-(baseY-(ROWS-1)*SYM_H)/SYM_H));}else{sp.alpha=blurAlpha;}}
+                            stBlur.clear();if(cs>0.3){const rx=GRID_X+idx*(SYM_W+REEL_GAP);stBlur.beginFill(CYAN,Math.min((cs-0.3)*0.5,0.18));stBlur.drawRect(rx+SYM_W*0.15,GRID_Y,SYM_W*0.7,GRID_H);stBlur.endFill();stBlur.alpha=1;}else{stBlur.alpha=0;}
+                            if(prog>=1){bouncing=true;stBlur.clear();stBlur.alpha=0;for(let s=0;s<reel.sprites.length;s++){reel.sprites[s].height=SYM_H-4;reel.sprites[s].alpha=s<ROWS?1:0;}for(let s=0;s<ROWS;s++){reel.sprites[s].texture=symTex[tgt[idx][s]];reel.sprites[s].symId=tgt[idx][s];reel.sprites[s].y=s*SYM_H;reel.sprites[s].alpha=1;}requestAnimationFrame(tick);return;}
                         }else if(!landed){
                             const bt=Math.min((now-st-dur)/bounceDur,1);
                             const bounce=bounceAmt*Math.sin(bt*Math.PI)*Math.pow(1-bt,1.5);
                             for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H+bounce*SYM_H;}
                             if(bt>=1){landed=true;stReelLanded[idx]=true;SFX.reelStop(idx);
+                                reelLayer.removeChild(stBlur);stBlur.destroy();
                                 if(tgt[idx].includes('S')){scattersLanded++;SFX.scatterLand();scatterFlash(idx);
                                     if(scattersLanded>=3&&!stScatterResolved){
                                         stScatterResolved=true;
@@ -1272,6 +1276,7 @@ function animateReels(tgt){
                                     }
                                 }
                                 for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H;}
+                                for(let s=ROWS;s<reel.sprites.length;s++){reel.sprites[s].alpha=0;reel.sprites[s].height=SYM_H-4;}
                                 reelFlash(idx);symbolLandPop(idx,tgt[idx]);settled++;
                                 if(settled===totalSlow){stopAnticipation();resolve();}
                                 return;}
@@ -1284,7 +1289,7 @@ function animateReels(tgt){
         });
     }
 
-    // ── NORMAL / TURBO: full reel spinning animation ──
+    // ── NORMAL / TURBO: full reel spinning animation with motion blur ──
     return new Promise(resolve=>{
         const bd=isTurbo()?80:200,sd=isTurbo()?500:1200;let settled=0;
         let scattersLanded=0,anticipationActive=false;
@@ -1302,11 +1307,15 @@ function animateReels(tgt){
             const bounceDur=isTurbo()?120:220;
             const bounceAmt=0.35;
             let bouncing=false,landed=false;
+            // Create motion blur overlay for this reel
+            const blurOverlay=new PIXI.Graphics();
+            blurOverlay.alpha=0;
+            reelLayer.addChild(blurOverlay);
             function easeSlot(t){
-                if(t<0.15)return t/0.15*0.25;
-                if(t<0.45)return 0.25+(t-0.15)/0.3*0.35;
-                const d=(t-0.45)/0.55;
-                return 0.6+0.4*(1-Math.pow(1-d,2.8));
+                if(t<0.12)return t/0.12*0.2;
+                if(t<0.4)return 0.2+(t-0.12)/0.28*0.35;
+                const d=(t-0.4)/0.6;
+                return 0.55+0.45*(1-Math.pow(1-d,3.2));
             }
             function tick(now){
                 if(reelLanded[idx])return;
@@ -1315,17 +1324,44 @@ function animateReels(tgt){
                     const prog=Math.min(el/dur,1);
                     const e=Math.min(easeSlot(prog),1);
                     const step=e*ts,is=Math.floor(step),fr=step-is;
-                    const speed=prog<0.5?1:Math.max(0,(1-prog)*2);
-                    const blurAlpha=speed>0.3?0.65+0.35*(1-speed):1;
-                    for(let s=0;s<ROWS;s++){
-                        const si=Math.min(is+s,spinSyms.length-1),sid=spinSyms[si];
-                        if(reel.sprites[s].symId!==sid){reel.sprites[s].texture=symTex[sid];reel.sprites[s].symId=sid;}
-                        reel.sprites[s].y=s*SYM_H-fr*SYM_H*0.7;
-                        reel.sprites[s].alpha=blurAlpha;
+                    // Speed: ramps up quickly, holds, then eases down
+                    const speed=prog<0.12?prog/0.12:prog>0.4?Math.pow((1-prog)/0.6,1.5):1;
+                    const clampSpeed=Math.max(0,Math.min(1,speed));
+                    // Motion blur: vertical stretch + alpha fade at speed
+                    const stretchY=1+clampSpeed*0.3;
+                    const blurAlpha=1-clampSpeed*0.25;
+                    // Show ROWS+2 sprites for seamless scroll (1 above, 3 visible, 1 below)
+                    const showCount=Math.min(ROWS+2,reel.sprites.length);
+                    for(let s=-1;s<=ROWS;s++){
+                        const sprIdx=s+1;
+                        if(sprIdx<0||sprIdx>=reel.sprites.length)continue;
+                        const sp=reel.sprites[sprIdx];
+                        const si=Math.min(Math.max(is+s,0),spinSyms.length-1),sid=spinSyms[si];
+                        if(sp.symId!==sid){sp.texture=symTex[sid];sp.symId=sid;}
+                        const baseY=s*SYM_H-fr*SYM_H;
+                        const h=(SYM_H-4)*stretchY;
+                        sp.height=h;
+                        sp.y=baseY+(SYM_H-4-h)/2;
+                        // Edge fade for sprites partially outside visible area
+                        if(s===-1){sp.alpha=blurAlpha*Math.max(0,Math.min(1,(baseY+SYM_H)/SYM_H));}
+                        else if(s===ROWS){sp.alpha=blurAlpha*Math.max(0,Math.min(1,1-(baseY-(ROWS-1)*SYM_H)/SYM_H));}
+                        else{sp.alpha=blurAlpha;}
                     }
+                    // Vertical streak overlay for high-speed blur
+                    blurOverlay.clear();
+                    if(clampSpeed>0.3){
+                        const rx=GRID_X+idx*(SYM_W+REEL_GAP),ry=GRID_Y;
+                        const streakAlpha=Math.min((clampSpeed-0.3)*0.5,0.18);
+                        blurOverlay.beginFill(CYAN,streakAlpha);
+                        blurOverlay.drawRect(rx+SYM_W*0.15,ry,SYM_W*0.7,GRID_H);
+                        blurOverlay.endFill();
+                        blurOverlay.alpha=1;
+                    }else{blurOverlay.alpha=0;}
                     if(prog>=1){
                         bouncing=true;
-                        for(let s=0;s<ROWS;s++){reel.sprites[s].texture=symTex[tgt[idx][s]];reel.sprites[s].symId=tgt[idx][s];reel.sprites[s].alpha=1;}
+                        blurOverlay.clear();blurOverlay.alpha=0;
+                        for(let s=0;s<reel.sprites.length;s++){reel.sprites[s].height=SYM_H-4;reel.sprites[s].alpha=s<ROWS?1:0;}
+                        for(let s=0;s<ROWS;s++){reel.sprites[s].texture=symTex[tgt[idx][s]];reel.sprites[s].symId=tgt[idx][s];reel.sprites[s].y=s*SYM_H;reel.sprites[s].alpha=1;}
                         requestAnimationFrame(tick);return;
                     }
                 }else if(!landed){
@@ -1335,6 +1371,7 @@ function animateReels(tgt){
                     if(bt>=1){
                         landed=true;reelLanded[idx]=true;
                         SFX.reelStop(idx);
+                        reelLayer.removeChild(blurOverlay);blurOverlay.destroy();
                         if(tgt[idx].includes('S')){
                             scattersLanded++;
                             SFX.scatterLand();
@@ -1350,6 +1387,7 @@ function animateReels(tgt){
                             }
                         }
                         for(let s=0;s<ROWS;s++){reel.sprites[s].y=s*SYM_H;}
+                        for(let s=ROWS;s<reel.sprites.length;s++){reel.sprites[s].alpha=0;reel.sprites[s].height=SYM_H-4;}
                         reelFlash(idx);symbolLandPop(idx,tgt[idx]);settled++;
                         if(settled===REELS){stopAnticipation();resolve();}
                         return;
