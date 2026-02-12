@@ -1966,7 +1966,7 @@ function sparkleBtn(){
 async function doSpin(){
     if(spinning||inBonus||balance<bet)return;
     spinning=true;
-    if(autoplay){autoSpinsLeft--;updateAutoHud();}
+    if(autoplay){if(autoSpinsLeft!==Infinity)autoSpinsLeft--;updateAutoHud();}
     SFX.spinStart();
     const btn=document.getElementById('spin-btn');btn.disabled=true;btn.classList.add('spinning');
     document.getElementById('spin-btn-wrap').classList.add('spinning');
@@ -2059,18 +2059,20 @@ document.getElementById('spin-btn').addEventListener('click',doSpin);
 document.getElementById('bet-up').addEventListener('click',()=>{if(!spinning&&!inBonus){betIdx=Math.min(betIdx+1,BETS.length-1);bet=BETS[betIdx];SFX.click();updateUI();}});
 document.getElementById('bet-dn').addEventListener('click',()=>{if(!spinning&&!inBonus){betIdx=Math.max(betIdx-1,0);bet=BETS[betIdx];SFX.click();updateUI();}});
 // Auto spin system
+let turboAutoMode=false; // true when turbo/sturbo started continuous spinning
 function updateAutoHud(){
     const hud=document.getElementById('auto-hud');
     const rem=document.getElementById('auto-remaining');
     if(autoplay&&autoSpinsLeft>0){
         hud.classList.add('show');
-        rem.textContent=autoSpinsLeft;
+        rem.textContent=turboAutoMode?(speedMode===2?'S.TURBO':'TURBO'):(autoSpinsLeft===Infinity?'∞':autoSpinsLeft);
     }else{
         hud.classList.remove('show');
     }
-    document.getElementById('btn-auto').classList.toggle('active',autoplay);
+    document.getElementById('btn-auto').classList.toggle('active',autoplay&&!turboAutoMode);
 }
 function stopAutoSpin(){
+    if(turboAutoMode){speedMode=0;turboAutoMode=false;updateSpeedBtns();}
     autoplay=false;autoSpinsLeft=0;autoSpinsTotal=0;
     updateAutoHud();
     document.getElementById('auto-picker').classList.remove('open');
@@ -2096,8 +2098,26 @@ function updateSpeedBtns(){
     tb.classList.toggle('active',speedMode===1);
     st.classList.toggle('active',speedMode===2);st.classList.toggle('sturbo',speedMode===2);
 }
-document.getElementById('btn-turbo').addEventListener('click',()=>{speedMode=speedMode===1?0:1;SFX.click();updateSpeedBtns();});
-document.getElementById('btn-sturbo').addEventListener('click',()=>{speedMode=speedMode===2?0:2;SFX.click();updateSpeedBtns();});
+document.getElementById('btn-turbo').addEventListener('click',()=>{
+    SFX.click();
+    if(speedMode===1){stopAutoSpin();return;}
+    if(autoplay)stopAutoSpin();
+    speedMode=1;turboAutoMode=true;autoplay=true;autoSpinsLeft=Infinity;
+    updateSpeedBtns();updateAutoHud();
+    document.getElementById('spin-menu').classList.remove('open');
+    document.getElementById('spin-menu-toggle').classList.remove('open');
+    if(!spinning&&!inBonus)doSpin();
+});
+document.getElementById('btn-sturbo').addEventListener('click',()=>{
+    SFX.click();
+    if(speedMode===2){stopAutoSpin();return;}
+    if(autoplay)stopAutoSpin();
+    speedMode=2;turboAutoMode=true;autoplay=true;autoSpinsLeft=Infinity;
+    updateSpeedBtns();updateAutoHud();
+    document.getElementById('spin-menu').classList.remove('open');
+    document.getElementById('spin-menu-toggle').classList.remove('open');
+    if(!spinning&&!inBonus)doSpin();
+});
 document.getElementById('btn-mute').addEventListener('click',()=>{const m=SFX.toggleMute();document.getElementById('btn-mute').textContent=m?'🔇':'🔊';document.getElementById('btn-mute').classList.toggle('active',m);});
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();doSpin();}});
 
