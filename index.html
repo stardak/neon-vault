@@ -2103,7 +2103,7 @@ document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();
 
 // Spin menu toggle
 const spinMenu=document.getElementById('spin-menu'),spinMenuToggle=document.getElementById('spin-menu-toggle');
-spinMenuToggle.addEventListener('click',e=>{e.stopPropagation();spinMenu.classList.toggle('open');spinMenuToggle.classList.toggle('open');});
+spinMenuToggle.addEventListener('click',e=>{e.stopPropagation();SFX.click();spinMenu.classList.toggle('open');spinMenuToggle.classList.toggle('open');});
 document.addEventListener('click',e=>{if(!spinMenu.contains(e.target)&&e.target!==spinMenuToggle){spinMenu.classList.remove('open');spinMenuToggle.classList.remove('open');}});
 
 // ════════════════════════════════════════════════════════════
